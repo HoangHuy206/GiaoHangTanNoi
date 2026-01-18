@@ -1,5 +1,6 @@
 @echo off
 echo Dang cap nhat code len GitHub...
+git pull origin main
 git add .
 set /p desc="Nhap noi dung thay doi (VD: Sua loi font): "
 git commit -m "%desc%"
