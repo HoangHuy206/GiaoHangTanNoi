@@ -1,0 +1,23 @@
+# GiaoHangTanNoi
+
+## cài dự án 
+```sh
+git clone https://github.com/HoangHuy206/GiaoHangTanNoi.git
+```
+
+## khi cài được dự án xong mở thư mục chứa dự án lên rồi cài thư viện node.js
+```sh
+npm install
+```
+
+## khi cài thư viên xong rồi chạy dự án
+
+```sh
+npm run dev
+```
+
+### Compile and Minify for Production
+
+```sh
+npm run build
+```
