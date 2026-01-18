@@ -1,0 +1,12 @@
+/* Reset toàn bộ lề và đệm của trình duyệt */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body, html, #app {
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden; /* Ngăn hiện thanh cuộn ngang */
+}
