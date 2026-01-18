@@ -9,6 +9,10 @@ git clone https://github.com/HoangHuy206/GiaoHangTanNoi.git
 ```sh
 npm install
 ```
+## Cài thêm thư viện để chạy sql
+```sh
+npm install express mysql2 cors body-parser
+```
 
 ## khi cài thư viên xong rồi chạy dự án
 
