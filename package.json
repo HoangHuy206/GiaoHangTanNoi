@@ -1,9 +1,4 @@
 {
-<<<<<<< HEAD
-  "dependencies": {
-    "@fortawesome/fontawesome-free": "^7.1.0",
-    "themify-icons": "^1.0.0"
-=======
   "name": "giaohangtannoi",
   "version": "0.0.0",
   "private": true,
@@ -22,6 +17,5 @@
     "@vitejs/plugin-vue": "^6.0.3",
     "vite": "^7.3.0",
     "vite-plugin-vue-devtools": "^8.0.5"
->>>>>>> afdafa79ab3ebcc01e169ddb1d3571a0537964f7
   }
 }
