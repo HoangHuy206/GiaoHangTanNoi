@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 // Đảm bảo dấu gạch nối 'vue-router' và đường dẫn ../pages/ chuẩn xác
 import HomeView from '../pages/HomeViews.vue' 
 import Login from '../pages/Login.vue'
-import DangKy from '../pages/dangkynguoidung.vue' 
+import dangkynguoidung from '../pages/dangkynguoidung.vue' // Bạn đang import tên là 'dangkynguoidung'
 import mainSp from '../pages/SanPham/mainSP.vue' 
 import phanhoidangky from '../pages/phanhoidangky.vue'
 
@@ -12,7 +12,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: HomeView, // ĐÃ SỬA: Phải là HomeView (khớp với dòng 3)
+      component: HomeView, 
       meta: { title: 'Trang chủ - Giao Hàng' } 
     },
     {
@@ -28,10 +28,23 @@ const router = createRouter({
       meta: { title: 'Sản phẩm' }
     },
     {
+      path: '/phanhoidangky',      
+      name: 'phanhoidangky',
+      component: phanhoidangky,      
+      meta: { title: 'Đăng ký thành viên ?' }
+    },
+    {
+      // Route này trước đó bị lỗi vì 'DangKy' chưa được import
       path: '/dang-ky',      
       name: 'dang-ky',
-      component: DangKy,      
+      component: dangkynguoidung, // ĐÃ SỬA: Dùng 'dangkynguoidung' cho khớp với import ở dòng 5
       meta: { title: 'Đăng ký' }
+    },
+    {
+      path: '/dangkynguoidung',      
+      name: 'dangkynguoidung',
+      component: dangkynguoidung,      
+      meta: { title: 'Đăng ký dành cho người dùng' }
     }
   ]
 })
