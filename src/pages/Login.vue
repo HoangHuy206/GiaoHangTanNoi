@@ -34,9 +34,11 @@
             <div class="divider">
               <span>Hoặc</span>
             </div>
-            <render-link to="/phanhoidangky">
-            <button type="button" class="btn btn-register" @click="handleRegister">Đăng ký</button>
-          </render-link>
+
+            <router-link to="/phanhoidangky">
+              <button type="button" class="btn btn-register">Đăng ký</button>
+            </router-link>
+
           </form>
         </div>
       </div>
@@ -46,46 +48,66 @@
 </template>
 
 <script setup>
-import { ref, render } from 'vue';
-import { useRouter } from 'vue-router'; // Import hook router
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 
-// 1. Import ảnh đúng vị trí (trong script, không phải style)
-import shipperImg from '@/assets/anh.logo/anhbiadangnhap1.png';
+// --- SỬA 3: IMPORT ẢNH ---
+// Bạn hãy chắc chắn trong thư mục src/assets có file ảnh tên là 'shipper.png'
+// Nếu ảnh của bạn tên khác hoặc nằm ở thư mục khác, hãy sửa đường dẫn bên dưới:
+import imgSource from '../assets/anh.logo/anhbiadangnhap1.png'; 
 
-const router = useRouter(); // Khởi tạo router
+const router = useRouter();
 const username = ref('');
 const password = ref('');
+const shipperImg = ref(imgSource); // Gán ảnh vào biến để dùng ở template
 
-// Hàm xử lý đăng nhập
-const handleLogin = () => {
-  // Validate cơ bản
-  if(username.value && password.value) {
-    console.log('Đang đăng nhập với:', username.value);
-    
-    // Giả lập đăng nhập thành công thì chuyển trang
-    // Bạn hãy thay '/home' bằng đường dẫn thực tế của trang chủ
-    router.push('/home'); 
-  } else {
-    alert('Vui lòng nhập đầy đủ thông tin!');
+const handleLogin = async () => {
+  // 1. Kiểm tra rỗng
+  if (!username.value || !password.value) {
+    alert("Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!");
+    return;
   }
-};
 
-// Hàm xử lý chuyển trang đăng ký
-const handleRegister = () => {
-  console.log('Chuyển sang trang đăng ký');
-  // Thay '/register' bằng đường dẫn thực tế của trang đăng ký
-  router.push('/phanhoidangky'); 
+  try {
+    // 2. Gửi về Server (Port 3000)
+    const response = await fetch('http://localhost:3000/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        username: username.value,
+        password: password.value
+      })
+    });
+
+    const data = await response.json();
+
+    // 3. Xử lý kết quả
+    if (response.ok) {
+      alert("Đăng nhập thành công!");
+      // Lưu thông tin user
+      localStorage.setItem('user', JSON.stringify(data.user));
+      // Chuyển trang
+      router.push('/home');
+    } else {
+      alert("Lỗi: " + (data.message || "Sai tài khoản hoặc mật khẩu!"));
+    }
+
+  } catch (error) {
+    console.error("Lỗi đăng nhập:", error);
+    alert("Không thể kết nối tới Server. Hãy kiểm tra lại file server.js!");
+  }
 };
 </script>
 
 <style scoped>
-/* Import Font chữ */
 @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Roboto:wght@400;500&display=swap');
 
-/* Cấu trúc chính */
+/* Giữ nguyên CSS cũ của bạn, chỉ chỉnh lại một chút cho đẹp */
 .login-page {
   font-family: 'Roboto', sans-serif;
-  background-color: #FEF5E7; /* Màu nền kem */
+  background-color: #FEF5E7;
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -100,7 +122,6 @@ const handleRegister = () => {
   align-items: center;
 }
 
-/* Phần Ảnh */
 .left-side {
   flex: 1;
   display: flex;
@@ -113,9 +134,10 @@ const handleRegister = () => {
   max-width: 100%;
   height: auto;
   object-fit: contain;
+  /* Thêm hiệu ứng bóng đổ cho ảnh đẹp hơn */
+  filter: drop-shadow(0 10px 15px rgba(0,0,0,0.1));
 }
 
-/* Phần Form */
 .right-side {
   flex: 1;
   display: flex;
@@ -143,7 +165,6 @@ const handleRegister = () => {
   letter-spacing: 1px;
 }
 
-/* Input Styles */
 .input-group {
   margin-bottom: 20px;
 }
@@ -165,11 +186,6 @@ const handleRegister = () => {
   background-color: #fff;
 }
 
-.input-group input::placeholder {
-  color: #aaa;
-}
-
-/* Button Styles */
 .btn {
   width: 100%;
   padding: 15px;
@@ -196,19 +212,29 @@ const handleRegister = () => {
 }
 
 .btn-register {
-  background-color: #FF9900;
+  background-color: #6c757d; /* Đổi màu nút đăng ký cho khác nút đăng nhập */
   color: white;
 }
 
 .btn-register:hover {
-  background-color: #e68a00;
+  background-color: #5a6268;
 }
 
-/* Divider "Hoặc" */
 .divider {
   margin: 20px 0;
   position: relative;
   text-align: center;
+}
+
+.divider::before { /* Thêm đường gạch ngang cho đẹp */
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: #ddd;
+  z-index: 0;
 }
 
 .divider span {
@@ -221,7 +247,11 @@ const handleRegister = () => {
   z-index: 1;
 }
 
-/* Responsive cho Mobile */
+/* Link mặc định của router-link sẽ có gạch chân, cần bỏ đi */
+a {
+  text-decoration: none;
+}
+
 @media (max-width: 768px) {
   .container {
     flex-direction: column;

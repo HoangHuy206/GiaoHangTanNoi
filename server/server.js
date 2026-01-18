@@ -1,26 +1,24 @@
 // File: server/server.js
-const express = require('express');
-const mysql = require('mysql2');
-const cors = require('cors');
-const bodyParser = require('body-parser');
+import express from 'express';
+import mysql from 'mysql2';
+import cors from 'cors';
+import bodyParser from 'body-parser';
 
 const app = express();
 app.use(cors()); 
 app.use(bodyParser.json());
 
-// --- CẤU HÌNH KẾT NỐI (ĐÃ SỬA SANG DÙNG POOL) ---
-// Dùng createPool thay vì createConnection để không bị lỗi ngắt kết nối
+// --- CẤU HÌNH KẾT NỐI TIDB (DÙNG POOL) ---
 const pool = mysql.createPool({
     host: 'gateway01.ap-southeast-1.prod.aws.tidbcloud.com', 
     port: 4000,
     user: 'vrQxVS7dzxo8oMs.root', 
-    password: 'uJYJ22lA4RuWjTWx', // Mật khẩu của bạn
+    password: 'uJYJ22lA4RuWjTWx', // Mật khẩu TiDB của bạn
     database: 'GiaoHangTanNoi',
     ssl: {
         minVersion: 'TLSv1.2',
         rejectUnauthorized: true
     },
-    // Các cấu hình giữ kết nối ổn định:
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
@@ -32,15 +30,21 @@ pool.getConnection((err, connection) => {
         console.error('❌ Lỗi kết nối TiDB:', err.message);
     } else {
         console.log('✅ Đã kết nối thành công với Database (Mode: Pool)!');
-        connection.release(); // Trả kết nối về hồ chứa
+        connection.release();
     }
 });
 
-// API ĐĂNG KÝ
-app.post('/api/register', (req, res) => {
+// Route mặc định (Để test xem server sống hay chết)
+app.get('/', (req, res) => {
+    res.send("Server Node.js đang chạy ngon lành!");
+});
+
+// --- API ĐĂNG KÝ ---
+// (Lưu ý: Đã bỏ chữ /api để khớp với frontend)
+app.post('/register', (req, res) => {
     const { username, password } = req.body;
     
-    // 1. Kiểm tra user tồn tại
+    // 1. Kiểm tra user tồn tại (Bảng 'accounts')
     const checkSql = "SELECT * FROM accounts WHERE username = ?";
     pool.query(checkSql, [username], (err, data) => {
         if (err) {
@@ -50,7 +54,7 @@ app.post('/api/register', (req, res) => {
         
         if (data.length > 0) return res.status(409).json({ message: "Tài khoản đã tồn tại!" });
 
-        // 2. Tạo mới
+        // 2. Tạo mới tài khoản
         const insertSql = "INSERT INTO accounts (username, password, role, created_at) VALUES (?, ?, 'user', NOW())";
         pool.query(insertSql, [username, password], (err, data) => {
             if (err) {
@@ -62,8 +66,8 @@ app.post('/api/register', (req, res) => {
     });
 });
 
-// API ĐĂNG NHẬP
-app.post('/api/login', (req, res) => {
+// --- API ĐĂNG NHẬP ---
+app.post('/login', (req, res) => {
     const { username, password } = req.body;
     
     const sql = "SELECT * FROM accounts WHERE username = ? AND password = ?";
@@ -74,6 +78,7 @@ app.post('/api/login', (req, res) => {
         }
         
         if (data.length > 0) {
+            // Trả về thông tin user
             return res.json({ status: "Success", role: data[0].role, user: data[0] });
         } else {
             return res.status(401).json({ status: "Fail", message: "Sai tài khoản hoặc mật khẩu" });
@@ -81,7 +86,7 @@ app.post('/api/login', (req, res) => {
     });
 });
 
-// Chạy server tại cổng 3000
+// Chạy server
 app.listen(3000, () => {
     console.log("🚀 Server đang chạy tại http://localhost:3000");
 });
