@@ -50,26 +50,21 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-
-// --- SỬA 3: IMPORT ẢNH ---
-// Bạn hãy chắc chắn trong thư mục src/assets có file ảnh tên là 'shipper.png'
-// Nếu ảnh của bạn tên khác hoặc nằm ở thư mục khác, hãy sửa đường dẫn bên dưới:
 import imgSource from '../assets/anh.logo/anhbiadangnhap1.png'; 
 
 const router = useRouter();
 const username = ref('');
 const password = ref('');
-const shipperImg = ref(imgSource); // Gán ảnh vào biến để dùng ở template
+const shipperImg = ref(imgSource);
 
 const handleLogin = async () => {
-  // 1. Kiểm tra rỗng
   if (!username.value || !password.value) {
     alert("Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!");
     return;
   }
 
   try {
-    // 2. Gửi về Server (Port 3000)
+    // SỬA QUAN TRỌNG: Bỏ '/api' vì server.js của bạn viết app.post('/login', ...)
     const response = await fetch('http://localhost:3000/login', {
       method: 'POST',
       headers: {
@@ -83,28 +78,36 @@ const handleLogin = async () => {
 
     const data = await response.json();
 
-    // 3. Xử lý kết quả
     if (response.ok) {
-      alert("Đăng nhập thành công!");
-      // Lưu thông tin user
+      // 1. Lưu thông tin user vào máy
       localStorage.setItem('user', JSON.stringify(data.user));
-      // Chuyển trang
-      router.push('/home');
+
+      // 2. PHÂN QUYỀN ĐIỀU HƯỚNG
+      if (data.role === 'driver') {
+        alert("Xin chào Tài xế!");
+        router.push('/trangchulaixe'); 
+      } else {
+        alert("Đăng nhập thành công!");
+        router.push('/home');
+      }
+      
     } else {
-      alert("Lỗi: " + (data.message || "Sai tài khoản hoặc mật khẩu!"));
+      // SỬA: Hiển thị đúng message lỗi trả về từ server (ví dụ: "Sai tài khoản hoặc mật khẩu")
+      alert(data.message || "Đăng nhập thất bại!");
     }
 
   } catch (error) {
-    console.error("Lỗi đăng nhập:", error);
-    alert("Không thể kết nối tới Server. Hãy kiểm tra lại file server.js!");
+    console.error("Lỗi chi tiết:", error);
+    // SỬA: Chỉ báo lỗi kết nối nếu catch thực sự không nhận được phản hồi từ server
+    alert("Không thể kết nối tới Server. Hãy kiểm tra XAMPP/Database hoặc chạy lại 'node server.js'!");
   }
 };
 </script>
 
 <style scoped>
+/* Giữ nguyên phần CSS của bạn vì đã khá đẹp và chuyên nghiệp */
 @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Roboto:wght@400;500&display=swap');
 
-/* Giữ nguyên CSS cũ của bạn, chỉ chỉnh lại một chút cho đẹp */
 .login-page {
   font-family: 'Roboto', sans-serif;
   background-color: #FEF5E7;
@@ -134,7 +137,6 @@ const handleLogin = async () => {
   max-width: 100%;
   height: auto;
   object-fit: contain;
-  /* Thêm hiệu ứng bóng đổ cho ảnh đẹp hơn */
   filter: drop-shadow(0 10px 15px rgba(0,0,0,0.1));
 }
 
@@ -212,7 +214,7 @@ const handleLogin = async () => {
 }
 
 .btn-register {
-  background-color: #6c757d; /* Đổi màu nút đăng ký cho khác nút đăng nhập */
+  background-color: #6c757d;
   color: white;
 }
 
@@ -226,7 +228,7 @@ const handleLogin = async () => {
   text-align: center;
 }
 
-.divider::before { /* Thêm đường gạch ngang cho đẹp */
+.divider::before {
   content: "";
   position: absolute;
   top: 50%;
@@ -247,7 +249,6 @@ const handleLogin = async () => {
   z-index: 1;
 }
 
-/* Link mặc định của router-link sẽ có gạch chân, cần bỏ đi */
 a {
   text-decoration: none;
 }

@@ -15,7 +15,7 @@ watch(isMenuOpen, (open) => {
   <div id="home-page">
     <header>
       <a href="#" @click.prevent="isMenuOpen = !isMenuOpen" class="menu-toggle">
-        <i class="ti-menu">☰</i>
+        <i class="ti-menu"></i>
       </a>
       
       <router-link to="/">

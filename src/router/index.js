@@ -1,10 +1,14 @@
 import { createRouter, createWebHistory } from 'vue-router'
-// Đảm bảo dấu gạch nối 'vue-router' và đường dẫn ../pages/ chuẩn xác
+
+// Import các trang chính
 import HomeView from '../pages/HomeViews.vue' 
 import Login from '../pages/Login.vue'
-import dangkynguoidung from '../pages/dangkynguoidung.vue' // Bạn đang import tên là 'dangkynguoidung'
+import dangkynguoidung from '../pages/dangkynguoidung.vue' 
 import mainSp from '../pages/SanPham/mainSP.vue' 
 import phanhoidangky from '../pages/phanhoidangky.vue'
+
+// THÊM: Import trang chủ của tài xế
+import trangchulaixe from '../pages/trangchulaixe.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -16,10 +20,22 @@ const router = createRouter({
       meta: { title: 'Trang chủ - Giao Hàng' } 
     },
     {
+      // THÊM: Route phụ để khớp với router.push('/home') trong Login.vue
+      path: '/home',
+      redirect: '/' 
+    },
+    {
       path: '/login',
       name: 'login',
       component: Login,
       meta: { title: 'Đăng nhập' }
+    },
+    {
+      // THÊM: Khai báo route cho tài xế (Giải quyết lỗi No match found)
+      path: '/trangchulaixe',
+      name: 'trangchulaixe',
+      component: trangchulaixe,
+      meta: { title: 'Trang chủ Tài xế' }
     },
     {
       path: '/mainSP', 
@@ -34,10 +50,9 @@ const router = createRouter({
       meta: { title: 'Đăng ký thành viên ?' }
     },
     {
-      // Route này trước đó bị lỗi vì 'DangKy' chưa được import
       path: '/dang-ky',      
       name: 'dang-ky',
-      component: dangkynguoidung, // ĐÃ SỬA: Dùng 'dangkynguoidung' cho khớp với import ở dòng 5
+      component: dangkynguoidung, 
       meta: { title: 'Đăng ký' }
     },
     {
@@ -49,6 +64,7 @@ const router = createRouter({
   ]
 })
 
+// Tự động đổi tiêu đề trang khi chuyển route
 router.beforeEach((to, from, next) => {
   document.title = to.meta.title || 'Giao Hàng Tận Nơi';
   next();
