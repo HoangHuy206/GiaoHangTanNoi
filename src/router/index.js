@@ -1,23 +1,19 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-// Import các trang chính
+// --- IMPORT COMPONENTS ---
+// ⚠️ Lưu ý: Kiểm tra kỹ tên file thực tế là 'HomeViews.vue' hay 'HomeView.vue' (không có s)
 import HomeView from '../pages/HomeViews.vue' 
 import Login from '../pages/Login.vue'
 import dangkynguoidung from '../pages/dangkynguoidung.vue' 
 import mainSp from '../pages/SanPham/mainSP.vue' 
 import phanhoidangky from '../pages/phanhoidangky.vue'
 import Food from '../pages/Food.vue'
-import products from '../pages/SanPham/Products/GioHang.vue'
-<<<<<<< HEAD
-import thunhap from'../pages/taixe/thunhap.vue'
-=======
-import dangkytaixe from '@/pages/dangkytaixe.vue'
->>>>>>> 48fa3e3ba3cc1ed4860735f4ffcf940b3d5f2f8c
+import dangkytaixe from '../pages/dangkytaixe.vue' // Đã đổi @ thành .. cho đồng bộ
 
-// THÊM: Import trang chủ của tài xế
+// Import trang chủ tài xế & Giỏ hàng
 import trangchulaixe from '../pages/trangchulaixe.vue'
-import GioHang from '../pages/SanPham/Products/GioHang.vue'
-
+import GioHang from '../pages/SanPham/Products/GioHang.vue' 
+// (Đã xóa dòng "import products..." vì nó bị trùng với GioHang và không dùng tới)
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -28,16 +24,14 @@ const router = createRouter({
       component: HomeView, 
       meta: { title: 'Trang chủ - Giao Hàng' } 
     },
-
     {
       path: '/giohang',
       name: 'giohang',
       component: GioHang, 
       meta: { title: 'Giỏ Hàng' } 
     },
-
     {
-      // THÊM: Route phụ để khớp với router.push('/home') trong Login.vue
+      // Route phụ để redirect về home nếu lỡ nhập /home
       path: '/home',
       redirect: '/' 
     },
@@ -48,49 +42,42 @@ const router = createRouter({
       meta: { title: 'Đăng nhập' }
     },
     {
-      // THÊM: Khai báo route cho tài xế (Giải quyết lỗi No match found)
+      // Route cho tài xế
       path: '/trangchulaixe',
       name: 'trangchulaixe',
       component: trangchulaixe,
       meta: { title: 'Trang chủ Tài xế' }
     },
-
     {
       path: '/mainSP', 
       name: 'mainSP',
       component: mainSp, 
       meta: { title: 'Sản phẩm' }
     },
-
     {
       path: '/phanhoidangky',      
       name: 'phanhoidangky',
       component: phanhoidangky,      
       meta: { title: 'Đăng ký thành viên ?' }
     },
-
-
     {
       path: '/dang-ky',      
       name: 'dang-ky',
       component: dangkynguoidung, 
       meta: { title: 'Đăng ký' }
     },
-
     {
       path: '/dangkynguoidung',      
       name: 'dangkynguoidung',
       component: dangkynguoidung,      
       meta: { title: 'Đăng ký dành cho người dùng' }
     },
-
     {
        path: '/Food',      
       name: 'Food',
       component: Food ,      
       meta: { title: 'Food' }
     },
-
     {
        path: '/dangkytaixe',      
       name: 'dangkytaixe',
@@ -100,7 +87,7 @@ const router = createRouter({
   ]
 })
 
-// Tự động đổi tiêu đề trang khi chuyển route
+// Tự động đổi tiêu đề tab trình duyệt
 router.beforeEach((to, from, next) => {
   document.title = to.meta.title || 'Giao Hàng Tận Nơi';
   next();
