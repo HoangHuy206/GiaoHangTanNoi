@@ -8,10 +8,12 @@ import mainSp from '../pages/SanPham/mainSP.vue'
 import phanhoidangky from '../pages/phanhoidangky.vue'
 import Food from '../pages/Food.vue'
 import products from '../pages/SanPham/Products/GioHang.vue'
+import thunhap from'../pages/taixe/thunhap.vue'
 
 // THÊM: Import trang chủ của tài xế
 import trangchulaixe from '../pages/trangchulaixe.vue'
 import GioHang from '../pages/SanPham/Products/GioHang.vue'
+
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -83,7 +85,14 @@ const router = createRouter({
       name: 'Food',
       component: Food ,      
       meta: { title: 'Food' }
-    }
+    },
+
+    {
+      path: '/thunhap',
+      name: 'thunhap',
+      component: thunhap, 
+      meta: { title: 'Thu Nhập' } 
+    },
   ]
 })
 
