@@ -49,14 +49,24 @@ const currentContent = computed(() => {
           <line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line>
         </svg>
         <div class="logo-box">
-           <img src="../../assets/anh.logo/anhnen.png" alt="Grab" class="logo-img" style="width: 100px; height:100px;"/> 
+           <img src="../assets/anh.logo/anhnen.png" alt="Grab" class="logo-img" style="width: 100px; height:100px;"/> 
         </div>
       </div>
       
       <div class="nav-right">
         <span class="support-text">Trung Tâm Hỗ Trợ</span>
-        <svg class="icon-action" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-      
+        
+        <router-link to=" " >
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" color="black">
+  <circle cx="9" cy="21" r="1"></circle>
+  <circle cx="20" cy="21" r="1"></circle>
+  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+</svg>
+</router-link>
+
+        <router-link to="/login">
+            <svg class="icon-action" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        </router-link>
       </div>
     </header>
 
@@ -80,104 +90,14 @@ const currentContent = computed(() => {
       </div>
     </div>
 
-    <div class="hero-banner">
-      <div class="banner-container">
-        <div class="hero-content-left">
-          <h1 class="brand-title">Food</h1>
-          <h2 class="hero-subtitle">Thèm món gì - Đặt ngay món đó!</h2>
-          <router-link to="/Food">
-          <button class="btn-order">Đặt hàng ngay</button>
-        </router-link>
-          <div class="small-link">
-            Trở thành Đối tác Nhà hàng của ngay! <a href="#">Ấn vào đây</a>.
-          </div>
-        </div>
-
-        <div class="hero-card-right">
-          <div class="card-icon-green">
-             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-          </div>
-          <h3>Trở Thành Nhà Hàng Đối Tác</h3>
-          <a href="#" class="card-arrow-link">Đăng ký ngay &rarr;</a>
-        </div>
-      </div>
-    </div>
+    
 
    
 
   </div> 
-  <div class="contenn">
-     <div class="span" style="text-align: center; font-size: 40px; font-weight: bold; color: green; margin-top: 50px;">
-      Mang đến cho bạn món ăn ưa thích, nóng hổi và ngon lành
-     </div>
+  
 
-     <div class="span" style="width: 600px; height: 100px; font-size: 30px; text-align: center; margin-top: 100px; margin-left: 30%;">
-
-      Đặt đồ ăn giao hàng tận nhà nhanh chóng lấp đầy chiếc bụng đói của bạn 
-      với những món ngon yêu thích và dịch vụ giao hàng “thần tốc”. 
-     </div>
-
-     <div class="contenn-css" style="display: flex; margin-top: 200px; text-align: center; margin-left: 20%; ">
-      <div class="css-dathang" style="margin-right: 50px;">
-        <img src="../../assets/anhND/anh-dat-hang.png" alt="">
-        <div class="span" style="font-weight: bold; color: green; font-size: 20px;" >
-          Đặt đồ ăn online chỉ sau vài cú chạm.
-          <p style="font-weight: normal; color: black; width: 400px;">Giao hàng nhanh thần tốc, đảm bảo mang cho bạn bữa ăn nóng hổi và ngon lành, dù bạn đang ở đâu.</p>
-        </div>
-      </div>
-        <div class="css-nhieumon">
-          <img src="../../assets/anhND/anh-lua-mon.png" alt="">
-           <div class="span" style="font-weight: bold; color: green; font-size: 20px;" >
-          Đặt đồ ăn online chỉ sau vài cú chạm.
-          <p style="font-weight: normal; color: black; width: 400px;">Giao hàng nhanh thần tốc, đảm bảo mang cho bạn bữa ăn nóng hổi và ngon lành, dù bạn đang ở đâu.</p>
-        </div>
-        </div>
-      
-
-     </div>
-    </div>
-<div class="footer" style="margin-top:150px;">
-    <div class="footer-container">
-        <div class="footer-column branding">
-          <img src="./assets/anh.logo/anhnen.png" alt="" class="footer-logo">
-          <div class="address-box">
-            <h4>ĐỊA CHỈ </h4>
-              <div class="map-container">
-                  <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3724.296073307168!2d105.7475674103227!3d21.020836187970833!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3134549c574476c3%3A0xd3c6af79105ea6da!2zVHLGsOG7nW5nIENhbyDEkeG6s25nIEPDtG5nIG5naOG7hyBDYW8gSMOgIE7hu5lp!5e0!3m2!1svi!2s!4v1768646189995!5m2!1svi!2s" width="250" height="250" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-              </div>
-          </div>
-        </div>
-
-        <div class="footer-colum">
-          <h4>Người dùng </h4>
-          <ul>
-            <li><router-link to="">Có gì mới ?</router-link></li>
-            <li><router-link to="">món mới?</router-link></li>
-            <li><router-link to="">food</router-link></li>
-          </ul>
-        </div>
-
-        <div class="footer-colum">
-          <h4>Đối tác tài xế</h4>
-          <ul>
-            <li><router-link to="">Thông tim mới </router-link></li>
-            <li><router-link to="">Di chuyển </router-link></li>
-            <li><router-link to="">Dịch vụ </router-link></li>
-            <li><router-link to="">Tung tâm tài xế</router-link></li>
-          </ul>
-        </div>
-
-        <div class="footer-colum">
-          <h4>Hợp tác cùng chúng tôi</h4>
-          <ul>
-            <li><router-link to="">Giao Hàng Tận Nơi</router-link></li>
-          </ul>
-        </div>
-
-      </div>
-      </div>
 </template>
-
 <style scoped>
 /* --- CÀI ĐẶT CHUNG --- */
 * { padding: 0; margin: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
