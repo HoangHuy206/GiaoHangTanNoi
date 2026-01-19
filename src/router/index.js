@@ -10,6 +10,7 @@ import trangchulaixe from '../pages/trangchulaixe.vue'
 import GioHang from '../pages/SanPham/Products/GioHang.vue' 
 import thongtinnguoidung from '@/pages/ThongTin/thongtinnguoidung.vue'
 import Food2 from '@/pages/Food2.vue'
+import sp01 from '@/pages/SanPham/MuaSP/sp01.vue'
 
 
 // (Đã xóa dòng "import products..." vì nó bị trùng với GioHang và không dùng tới)
@@ -99,7 +100,15 @@ const router = createRouter({
       name: 'Food2',
       component: Food2 ,      
       meta: { title: 'Trang Chủ' }
-    }
+    },
+    
+    {
+       path: '/sp01',      
+      name: 'sp01',
+      component: sp01 ,      
+      meta: { title: 'Bánh cuốn' }
+    },
+
   ]
 })
 
