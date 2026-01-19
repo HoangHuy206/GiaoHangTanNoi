@@ -8,14 +8,7 @@ import dangkynguoidung from '../pages/dangkynguoidung.vue'
 import mainSp from '../pages/SanPham/mainSP.vue' 
 import phanhoidangky from '../pages/phanhoidangky.vue'
 import Food from '../pages/Food.vue'
-<<<<<<< HEAD
-import products from '../pages/SanPham/Products/GioHang.vue'
-import dangkytaixe from '@/pages/dangkytaixe.vue'
-import thongtinnguoidung from '@/pages/ThongTin/thongtinnguoidung.vue'
-import Food2 from '@/pages/Food2.vue'
-=======
 import dangkytaixe from '../pages/dangkytaixe.vue' // Đã đổi @ thành .. cho đồng bộ
->>>>>>> e30fd8d93c00f68d30b5d4c3ced5caef9e82a373
 
 // Import trang chủ tài xế & Giỏ hàng
 import trangchulaixe from '../pages/trangchulaixe.vue'
