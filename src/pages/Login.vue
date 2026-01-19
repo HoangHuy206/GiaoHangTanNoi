@@ -29,7 +29,9 @@
               />
             </div>
 
+            <router-link to="/Food2">
             <button type="submit" class="btn btn-login">Đăng Nhập</button>
+            </router-link>
             
             <div class="divider">
               <span>Hoặc</span>

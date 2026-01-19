@@ -1,6 +1,6 @@
 import { createApp } from 'vue'
 // import App from '../src/pages/trangchulaixe.vue'      // Dùng ./ vì cùng nằm trong src
-import App from '../src/pages/Food.vue'
+import App from './App.vue'
 import router from './router'
 import './assets/main.css'
 
