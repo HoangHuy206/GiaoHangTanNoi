@@ -1,4 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
+
+// --- IMPORT COMPONENTS ---
+// ⚠️ Lưu ý: Kiểm tra kỹ tên file thực tế là 'HomeViews.vue' hay 'HomeView.vue' (không có s)
 import HomeView from '../pages/HomeViews.vue' 
 import Login from '../pages/Login.vue'
 import dangkynguoidung from '../pages/dangkynguoidung.vue' 
@@ -6,11 +9,13 @@ import mainSp from '../pages/SanPham/mainSP.vue'
 import phanhoidangky from '../pages/phanhoidangky.vue'
 import Food from '../pages/Food.vue'
 import dangkytaixe from '../pages/dangkytaixe.vue' // Đã đổi @ thành .. cho đồng bộ
-import trangchulaixe from '../pages/trangchulaixe.vue'
-import GioHang from '../pages/SanPham/Products/GioHang.vue' 
 import thongtinnguoidung from '@/pages/ThongTin/thongtinnguoidung.vue'
 import Food2 from '@/pages/Food2.vue'
 import sp01 from '@/pages/SanPham/MuaSP/sp01.vue'
+
+// Import trang chủ tài xế & Giỏ hàng
+import trangchulaixe from '@/pages/trangchulaixe.vue'
+import GioHang from '../pages/SanPham/Products/GioHang.vue' 
 
 
 // (Đã xóa dòng "import products..." vì nó bị trùng với GioHang và không dùng tới)
@@ -80,7 +85,13 @@ const router = createRouter({
       meta: { title: 'Food' }
     },
 
-   
+       {
+       path: '/Food2',      
+      name: 'Food2',
+      component: Food2 ,      
+      meta: { title: 'Food' }
+    },
+
     {
        path: '/dangkytaixe',      
       name: 'dangkytaixe',

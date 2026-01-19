@@ -1,299 +1,349 @@
 <template>
-  <div class="page-wrapper">
-    <div class="main-content-scroll">
-      <div class="header-banner" :style="{ backgroundImage: `url(${bannerImage})` }">
-        <div class="nav-bar">
-          <button class="icon-btn" @click="$router.back()">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
-          </button>
-          <button class="icon-btn">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-          </button>
+  <div class="desktop-container">
+    <div class="header-banner" :style="{ backgroundImage: `url(${bannerImage})` }">
+      <div class="nav-bar">
+        <button class="icon-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+        </button>
+        
+        <button class="icon-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="profile-info">
+      <div class="avatar-container">
+        <img 
+          :src="user.avatar || defaultAvatar" 
+          alt="Avatar" 
+          class="avatar-img"
+          @error="handleImageError"
+        />
+      </div>
+
+      <h2 class="user-name">{{ user.name }}</h2>
+
+      <div class="stats-row">
+        <div class="stat-item">
+          <span class="stat-num">{{ user.likes }}</span>
+          <span class="stat-label">lượt thích</span>
+        </div>
+        <div class="divider"></div>
+        <div class="stat-item">
+          <span class="stat-num">{{ user.followers }}</span>
+          <span class="stat-label">người theo dõi</span>
+        </div>
+        <div class="divider"></div>
+        <div class="stat-item">
+          <span class="stat-num">{{ user.following }}</span>
+          <span class="stat-label">đang theo dõi</span>
         </div>
       </div>
 
-      <section class="profile-section-full">
-        <div class="container-center">
-          <div class="avatar-wrapper" @click="triggerFileInput">
-            <img :src="user.avatar || defaultAvatar" alt="Avatar" class="avatar-img" @error="handleImageError"/>
-            <div class="avatar-hover-mask">
-              <span>Thay ảnh</span>
-            </div>
-            <input type="file" ref="fileInput" hidden accept="image/*" @change="onFileChange" />
-          </div>
-
-          <h2 class="display-name">{{ user.name }}</h2>
-
-          <div class="stats-container">
-            <div class="stat-box">
-              <span class="num">{{ user.likes }}</span>
-              <span class="label">lượt thích</span>
-            </div>
-            <div class="stat-divider"></div>
-            <div class="stat-box">
-              <span class="num">{{ user.followers }}</span>
-              <span class="label">người theo dõi</span>
-            </div>
-            <div class="stat-divider"></div>
-            <div class="stat-box">
-              <span class="num">{{ user.following }}</span>
-              <span class="label">đang theo dõi</span>
-            </div>
-          </div>
-
-          <div class="action-group">
-            <button class="btn-edit">Chỉnh sửa hồ sơ</button>
-            <button class="btn-logout" @click="handleLogout">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-              Đăng xuất
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <section class="favorites-section-full">
-        <div class="container-center">
-          <div class="list-header">
-            <h3>Quán yêu thích</h3>
-            <div class="status-pill">
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-              Chỉ hiển thị với bạn
-            </div>
-          </div>
-
-          <div v-if="favoriteShops.length > 0" class="shop-grid">
-            <div class="shop-card" v-for="shop in favoriteShops" :key="shop.id">
-              <div class="image-box">
-                <img :src="shop.image" :alt="shop.name">
-                <button class="btn-remove" @click="removeFavorite(shop.id)">✕</button>
-              </div>
-              <div class="shop-content">
-                <h4>{{ shop.name }}</h4>
-                <p>{{ shop.address }}</p>
-              </div>
-            </div>
-          </div>
-
-          <div v-else class="empty-state">
-            <p>Bạn chưa có quán yêu thích nào. Hãy quay lại trang chủ và nhấn ❤️ nhé!</p>
-            <router-link to="/food2" class="home-link">Đi tới Trang Chủ</router-link>
-          </div>
-        </div>
-      </section>
+      <button class="edit-btn">Chỉnh sửa hồ sơ</button>
     </div>
-  </div>
+
+    <div class="favorites-section">
+      <div class="section-header">
+        <h3>Quán yêu thích</h3>
+        <span class="privacy-badge">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          Chỉ hiển thị với bạn
+        </span>
+        <button class="arrow-right">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </button>
+      </div>
+
+      <div class="restaurant-grid">
+        <div class="restaurant-card" v-for="(shop, index) in favoriteShops" :key="index">
+          <div class="card-image-wrapper">
+            <img :src="shop.image" :alt="shop.name" class="shop-img">
+            <span class="discount-badge" v-if="shop.discount">{{ shop.discount }}</span>
+          </div>
+          <div class="card-info">
+            <h4>{{ shop.name }}</h4>
+            <p class="shop-address">{{ shop.address }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import axios from 'axios'; // Đảm bảo đã cài đặt axios: npm install axios
+import { ref, reactive } from 'vue';
 
-const router = useRouter();
-const defaultAvatar = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
-const bannerImage = 'https://vmstyle.vn/wp-content/uploads/2025/10/hinh-nen-cay-co-4k-voi-tan-la-xanh-mat-va-nang-xuyen-qua.jpg';
+// 1. Cấu hình ảnh nền và ảnh mặc định
+const bannerImage = 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2070&auto=format&fit=crop'; // Ảnh lá cây
+// Thêm dòng này ở trên cùng, chỗ các lệnh import khác
+import defaultAvatarImg from '@/assets/anhND/anhdaidienmacdinh.jpg';
 
+// ...
+
+// Sau đó gán vào biến (bỏ dấu ngoặc nháy đi vì nó là biến đã import)
+const defaultAvatar = defaultAvatarImg; // Ảnh mặc định nếu user chưa upload
+
+// 2. Dữ liệu người dùng (Giả lập)
 const user = reactive({
-  id: '',
-  name: 'Người dùng', 
-  avatar: '',
+  name: 'Văn Bình Đỗ',
+  avatar: '', // Để trống chuỗi này '' để test tính năng ảnh mặc định
   likes: 0,
   followers: 0,
   following: 0
 });
 
-const favoriteShops = ref([]);
-const fileInput = ref(null);
-
-const getFavoritesKey = () => {
-  const storedUser = localStorage.getItem('userLogin');
-  if (storedUser) {
-    const data = JSON.parse(storedUser);
-    // Sử dụng tên đăng nhập hoặc fullname để định danh danh sách yêu thích
-    return `favoriteShops_${data.username || data.fullname || 'guest'}`;
+// 3. Danh sách quán yêu thích
+const favoriteShops = ref([
+  {
+    name: 'Cơm Thố Anh Nguyễn',
+    address: 'Cơm Thố Anh Nguyễn - Lê...',
+    image: 'https://images.foody.vn/res/g103/1025880/prof/s576x330/foody-upload-api-foody-mobile-com-tho-anh-nguyen-190610103723.jpg', // Link ảnh mẫu
+    discount: 'Giảm 50%'
+  },
+  // Thêm dữ liệu giả để test giao diện máy tính
+  {
+    name: 'Trà Sữa TocoToco',
+    address: '123 Đường Láng, Hà Nội',
+    image: 'https://images.unsplash.com/photo-1558981408-db0ecd8a1ee4?auto=format&fit=crop&w=500&q=60',
+    discount: 'Freeship'
   }
-  return 'favoriteShops_guest';
+]);
+
+// Hàm xử lý khi link ảnh avatar bị lỗi -> chuyển về mặc định
+const handleImageError = (e) => {
+  e.target.src = defaultAvatar;
 };
-
-const loadData = () => {
-  const storedUser = localStorage.getItem('userLogin');
-  if (storedUser) {
-    const data = JSON.parse(storedUser);
-    console.log("Dữ liệu nhận được:", data); // Kiểm tra dữ liệu thực tế tại Console
-    
-    user.id = data.account_id;
-    // QUAN TRỌNG: Dùng chính xác tên cột 'fullname' (viết thường) từ DB
-    user.name = data.fullname || 'Người dùng'; 
-    user.avatar = data.avatar_url || '';
-    user.likes = data.likes || 0;
-    user.followers = data.followers || 0;
-    user.following = data.following || 0;
-  }
-  
-  const favKey = getFavoritesKey();
-  const storedFavs = localStorage.getItem(favKey);
-  if (storedFavs) favoriteShops.value = JSON.parse(storedFavs);
-};
-
-onMounted(loadData);
-
-const handleLogout = () => {
-  if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
-    localStorage.removeItem('userLogin');
-    router.push('/login');
-  }
-};
-
-const triggerFileInput = () => fileInput.value.click();
-
-const onFileChange = async (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      const base64Image = event.target.result;
-      user.avatar = base64Image;
-
-      // Gửi yêu cầu lưu ảnh vào Database vĩnh viễn
-      try {
-        await axios.post('http://localhost:3000/api/update-avatar', {
-          account_id: user.id,
-          avatar_data: base64Image
-        });
-
-        // Cập nhật lại localStorage để dữ liệu mới nhất được duy trì
-        const userData = JSON.parse(localStorage.getItem('userLogin')) || {};
-        userData.avatar_url = base64Image;
-        localStorage.setItem('userLogin', JSON.stringify(userData));
-        
-        console.log("Đã cập nhật ảnh đại diện thành công!");
-      } catch (error) {
-        console.error("Lỗi khi gửi ảnh lên server:", error);
-      }
-    };
-    reader.readAsDataURL(file);
-  }
-};
-
-const removeFavorite = (id) => {
-  const favKey = getFavoritesKey();
-  favoriteShops.value = favoriteShops.value.filter(s => s.id !== id);
-  localStorage.setItem(favKey, JSON.stringify(favoriteShops.value));
-};
-
-const handleImageError = (e) => { e.target.src = defaultAvatar; };
 </script>
 
 <style scoped>
-/* Giữ nguyên phần CSS của bạn */
-.page-wrapper {
-  width: 100vw;
-  height: 100vh;
+/* Reset cơ bản */
+* {
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Container chính trên Desktop */
+.desktop-container {
+  max-width: 900px; /* Giới hạn chiều rộng để nhìn giống profile card */
+  margin: 40px auto;
   background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
   overflow: hidden;
+  min-height: 80vh;
 }
-.main-content-scroll {
-  width: 100%;
-  height: 100%;
-  overflow-y: auto;
-  scrollbar-width: none;
-}
-.main-content-scroll::-webkit-scrollbar { display: none; }
+
+/* Header Banner */
 .header-banner {
-  width: 100%;
-  height: 250px;
+  height: 200px; /* Cao hơn trên desktop */
   background-size: cover;
   background-position: center;
+  position: relative;
 }
-.nav-bar { display: flex; justify-content: space-between; padding: 20px; }
+
+.nav-bar {
+  display: flex;
+  justify-content: space-between;
+  padding: 20px;
+}
+
 .icon-btn {
-  background: rgba(0,0,0,0.4); border: none; border-radius: 50%;
-  width: 40px; height: 40px; color: white; cursor: pointer;
+  background: rgba(0, 0, 0, 0.3);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.2s;
 }
-.container-center {
-  width: 100%;
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 0 20px;
-  box-sizing: border-box;
+
+.icon-btn:hover {
+  background: rgba(0, 0, 0, 0.5);
 }
-.profile-section-full {
-  width: 100%;
-  background: #fff;
-  border-bottom: 10px solid #f8f9fa;
-  padding-bottom: 40px;
+
+/* Thông tin Profile */
+.profile-info {
   text-align: center;
+  padding: 0 20px 30px;
+  position: relative;
+  border-bottom: 8px solid #f5f5f5;
 }
-.avatar-wrapper {
-  width: 150px; height: 150px;
-  margin: -75px auto 15px;
+
+.avatar-container {
+  width: 120px;
+  height: 120px;
+  margin: -60px auto 15px; /* Kéo avatar lên đè banner */
   position: relative;
   border-radius: 50%;
-  border: 5px solid white;
-  background: #fff;
-  overflow: hidden;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-  cursor: pointer;
+  border: 4px solid white;
+  background-color: #fff;
 }
-.avatar-img { width: 100%; height: 100%; object-fit: cover; }
-.avatar-hover-mask {
-  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0,0,0,0.4); color: white;
-  display: flex; align-items: center; justify-content: center;
-  opacity: 0; transition: 0.3s; font-size: 14px;
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
 }
-.avatar-wrapper:hover .avatar-hover-mask { opacity: 1; }
-.display-name { font-size: 32px; font-weight: 700; margin-bottom: 20px; color: #333; }
-.stats-container {
+
+.user-name {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 15px;
+  color: #333;
+}
+
+.stats-row {
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 30px;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
-.stat-box { display: flex; flex-direction: column; min-width: 100px; }
-.stat-box .num { font-size: 22px; font-weight: 800; color: #222; }
-.stat-box .label { font-size: 14px; color: #777; margin-top: 4px; }
-.stat-divider { width: 1px; height: 30px; background: #eee; }
-.action-group { display: flex; justify-content: center; gap: 15px; }
-.btn-edit {
-  background: #00B14F; color: #fff; border: none; padding: 12px 35px;
-  border-radius: 30px; font-weight: 600; cursor: pointer;
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
-.btn-logout {
-  background: #fff; color: #ff4d4f; border: 1.5px solid #ff4d4f;
-  padding: 12px 25px; border-radius: 30px; font-weight: 600;
-  display: flex; align-items: center; gap: 8px; cursor: pointer;
+
+.stat-num {
+  font-weight: bold;
+  font-size: 18px;
 }
-.favorites-section-full { width: 100%; padding: 40px 0; }
-.list-header { display: flex; align-items: center; margin-bottom: 30px; }
-.list-header h3 { font-size: 20px; margin: 0; color: #333; }
-.status-pill {
-  display: flex; align-items: center; gap: 6px; font-size: 13px; color: #888;
-  background: #f1f1f1; padding: 6px 14px; border-radius: 20px; margin-left: 20px;
+
+.stat-label {
+  font-size: 13px;
+  color: #666;
 }
-.shop-grid {
+
+.divider {
+  width: 1px;
+  height: 20px;
+  background-color: #ddd;
+}
+
+.edit-btn {
+  background-color: #00B14F; /* Màu xanh lá đặc trưng */
+  color: white;
+  border: none;
+  padding: 10px 40px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.edit-btn:hover {
+  background-color: #009944;
+}
+
+/* Phần Quán yêu thích */
+.favorites-section {
+  padding: 20px 30px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.arrow-right {
+    margin-left: auto;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #666;
+}
+
+.privacy-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #666;
+  background: #f0f0f0;
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-left: 10px;
+}
+
+/* Grid Layout cho Desktop */
+.restaurant-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 25px;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Tự động chia cột */
+  gap: 20px;
 }
-.shop-card {
-  background: #fff; border-radius: 12px; border: 1px solid #f0f0f0;
-  overflow: hidden; transition: 0.3s;
+
+.restaurant-card {
+  border: 1px solid #eee;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.2s;
+  cursor: pointer;
 }
-.shop-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
-.image-box { position: relative; height: 160px; }
-.image-box img { width: 100%; height: 100%; object-fit: cover; }
-.btn-remove {
-  position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.9);
-  border: none; width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
+
+.restaurant-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
-.shop-content { padding: 15px; text-align: left; }
-.shop-content h4 { margin: 0 0 5px; font-size: 16px; }
-.shop-content p { margin: 0; font-size: 13px; color: #999; }
-.empty-state { padding: 80px 0; text-align: center; color: #aaa; }
-.home-link {
-  display: inline-block; margin-top: 15px; color: #00B14F; text-decoration: none;
-  font-weight: 700; border: 2px solid #00B14F; padding: 8px 25px; border-radius: 25px;
+
+.card-image-wrapper {
+  position: relative;
+  height: 150px;
+}
+
+.shop-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.discount-badge {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  background-color: #ee4d2d;
+  color: white;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-top-right-radius: 4px;
+}
+
+.card-info {
+  padding: 12px;
+}
+
+.card-info h4 {
+  margin: 0 0 5px;
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.shop-address {
+  margin: 0;
+  font-size: 13px;
+  color: #888;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 </style>

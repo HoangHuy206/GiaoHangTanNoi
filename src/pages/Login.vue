@@ -29,8 +29,13 @@
               />
             </div>
 
+            
             <button type="submit" class="btn btn-login">Đăng Nhập</button>
+<<<<<<< HEAD
+=======
           
+>>>>>>> 5735f8549e1366ea590a3bdeab59692e786ddd87
+            
             <div class="divider">
               <span>Hoặc</span>
             </div>
@@ -64,6 +69,7 @@ const handleLogin = async () => {
   }
 
   try {
+    // SỬA QUAN TRỌNG: Bỏ '/api' vì server.js của bạn viết app.post('/login', ...)
     const response = await fetch('http://localhost:3000/login', {
       method: 'POST',
       headers: {
@@ -78,35 +84,33 @@ const handleLogin = async () => {
     const data = await response.json();
 
     if (response.ok) {
-      /**
-       * QUAN TRỌNG: Đổi key lưu trữ thành 'userLogin' để khớp với logic 
-       * ở trang Thông tin người dùng. 
-       * data.user phải chứa: account_id, username, fullname, role, avatar_url
-       */
-      localStorage.setItem('userLogin', JSON.stringify(data.user));
+      // 1. Lưu thông tin user vào máy
+      localStorage.setItem('user', JSON.stringify(data.user));
 
-      // Phân quyền điều hướng
-      if (data.user.role === 'driver') {
-        alert(`Xin chào Tài xế ${data.user.fullname || data.user.username}!`);
+      // 2. PHÂN QUYỀN ĐIỀU HƯỚNG
+      if (data.role === 'driver') {
+        alert("Xin chào Tài xế!");
         router.push('/trangchulaixe'); 
       } else {
-        alert(`Chào mừng ${data.user.fullname || data.user.username} quay trở lại!`);
+        alert("Đăng nhập thành công!");
         router.push('/Food2');
       }
       
     } else {
-      alert(data.message || "Sai tài khoản hoặc mật khẩu!");
+      // SỬA: Hiển thị đúng message lỗi trả về từ server (ví dụ: "Sai tài khoản hoặc mật khẩu")
+      alert(data.message || "Đăng nhập thất bại!");
     }
 
   } catch (error) {
-    console.error("Lỗi đăng nhập:", error);
-    alert("Không thể kết nối tới Server. Hãy kiểm tra XAMPP hoặc chạy 'node server.js'!");
+    console.error("Lỗi chi tiết:", error);
+    // SỬA: Chỉ báo lỗi kết nối nếu catch thực sự không nhận được phản hồi từ server
+    alert("Không thể kết nối tới Server. Hãy kiểm tra XAMPP/Database hoặc chạy lại 'node server.js'!");
   }
 };
 </script>
 
 <style scoped>
-/* Giữ nguyên phần CSS chuyên nghiệp của bạn */
+/* Giữ nguyên phần CSS của bạn vì đã khá đẹp và chuyên nghiệp */
 @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Roboto:wght@400;500&display=swap');
 
 .login-page {
@@ -248,6 +252,10 @@ const handleLogin = async () => {
   font-weight: 500;
   position: relative;
   z-index: 1;
+}
+
+a {
+  text-decoration: none;
 }
 
 @media (max-width: 768px) {
