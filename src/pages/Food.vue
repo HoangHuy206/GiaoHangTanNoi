@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed ,onMounted, onUnmounted} from 'vue'
 import { RouterLink } from 'vue-router'
 
 const isMenuOpen = ref(false)
@@ -38,6 +38,45 @@ const menuData = [
 const currentContent = computed(() => {
   return menuData.find(item => item.id === activeTab.value)?.columns || []
 })
+
+// ảnh chuyển động
+
+// --- LOGIC SLIDER ---
+const currentIndex = ref(0)
+const images = [
+  { 
+    src: new URL('../assets/anhbanner/anhbanh.webp', import.meta.url).href, 
+    alt: 'Banner 1' 
+  },
+  { 
+    src: new URL('../assets/anhbanner/anhbanh2.jpg', import.meta.url).href, 
+    alt: 'Banner 2' 
+  },
+  { 
+    src: new URL('../assets/anhbanner/anhbun.jpg', import.meta.url).href, 
+    alt: 'Banner 3' 
+  },
+]
+
+const nextSlide = () => {
+  currentIndex.value = (currentIndex.value + 1) % images.length
+}
+
+const prevSlide = () => {
+  currentIndex.value = (currentIndex.value - 1 + images.length) % images.length
+}
+
+// Thiết lập tự động chuyển ảnh sau 4 giây
+let timer = null
+onMounted(() => {
+  timer = setInterval(nextSlide, 4000)
+})
+
+onUnmounted(() => {
+  if (timer) clearInterval(timer)
+})
+
+// kết thúc chuyển động anh
 </script>
 
 <template>
@@ -89,10 +128,36 @@ const currentContent = computed(() => {
         </div>
       </div>
     </div>
+    <!-- bắt đầu phần content -->
 
+    <main class="hero-section">
+      <div class="slider-container">
+        <div 
+          class="slides-wrapper" 
+          :style="{ transform: `translateX(-${currentIndex * 100}%)` }"
+        >
+          <div v-for="(img, index) in images" :key="index" class="slide">
+            <img :src="img.src" :alt="img.alt" />
+          </div>
+        </div>
+
+        <button class="nav-btn prev" @click="prevSlide">&#10094;</button>
+        <button class="nav-btn next" @click="nextSlide">&#10095;</button>
+
+        <div class="search-overlay">
+          <div class="search-box">
+            <p class="greeting">Xin Chào Bạn </p>
+            <h1 class="title">Chúng tôi nên giao thức ăn của bạn ở đâu hôm nay?</h1>
+            <div class="input-group">
+              <input type="text" class="inp-find" placeholder="Nhập Quán bạn muốn tìm..." />
+              <button class="btn-find">Tìm kiếm</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
     
-
-   
+   <!-- kết thúc phần content -->
 
   </div> 
   
@@ -181,150 +246,85 @@ const currentContent = computed(() => {
    text-decoration: underline; 
   }
 
-/* --- BANNER CSS (FIX FULL MÀN HÌNH) --- */
-.hero-banner {
-  margin-top: 80px;
+  /* kết thúc phần header */
+
+.slider-container {
   position: relative;
-  height: 600px;
-  
-  /* Kỹ thuật phá khung: đảm bảo banner luôn full màn hình bất kể cha nó là gì */
-  width: 100vw; 
-  margin-left: calc(50% - 50vw); 
-  
-  /* Hình ảnh đồ ăn */
-  background-image: url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070&auto=format&fit=crop');
-  background-size: cover;
-  background-position: center;
-  display: flex;
-  align-items: center;
-}
-
-/* Lớp phủ màu tối nhẹ */
-.hero-banner::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.4); 
-}
-
-.banner-container {
-  position: relative; z-index: 2;
   width: 100%;
-  max-width: 1200px; /* Giới hạn nội dung ở giữa */
-  margin: 0 auto;
-  padding: 0 40px;
+  height: 500px; /* Chiều cao giống GrabFood */
+  overflow: hidden;
+  margin-top: 80px;
+}
+
+.slides-wrapper {
   display: flex;
-  justify-content: space-between;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); /* Hiệu ứng trượt mượt */
+}
+
+.slide {
+  min-width: 100%;
+  height: 100%;
+}
+
+.slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Để ảnh không bị móp */
+}
+
+/* Ô tìm kiếm đè lên ảnh */
+.search-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
   align-items: center;
-}
-.user-link {
-    text-decoration: none;
-    color: #000;
-    display: flex;       /* Quan trọng: giúp thẻ a bao trọn icon */
-    align-items: center;
-    cursor: pointer;     /* Hiển thị bàn tay khi di chuột */
+  padding-left: 80px;
+  pointer-events: none; /* Để vẫn click được vào nút slide phía sau nếu cần */
 }
 
-.hero-content-left { color: white; max-width: 500px; }
-.brand-title { font-size: 60px; font-weight: 800; margin-bottom: 10px; }
-.hero-subtitle { font-size: 30px; margin-bottom: 30px; font-weight: 600; }
-.btn-order { background-color: #00B14F; color: white; border: none; padding: 15px 30px; font-size: 18px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.3s; }
-.btn-order:hover { background-color: #009e47; }
-.small-link { margin-top: 20px; font-size: 15px; color: #fff; }
-.small-link a { color: #fff; font-weight: bold; text-decoration: underline; }
-
-/* Thẻ nổi bên phải */
-.hero-card-right {
-  background-color: white;
-  width: 280px;
-  padding: 30px 20px;
+.search-box {
+  background: white;
+  padding: 40px;
   border-radius: 8px;
-  text-align: center;
-  border: 1px solid #ddd;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-  display: flex; flex-direction: column; align-items: center;
+  width: 450px;
+  pointer-events: auto; /* Kích hoạt lại click cho ô tìm kiếm */
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
 }
-.card-icon-green {
-  background-color: #00B14F;
-  width: 60px; height: 60px;
+
+.nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255,255,255,0.7);
+  border: none;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  display: flex; justify-content: center; align-items: center;
-  margin-bottom: 15px;
+  cursor: pointer;
+  z-index: 10;
 }
-.hero-card-right h3 { color: #333; font-size: 18px; font-weight: 700; margin-bottom: 15px; }
-.card-arrow-link { color: #00B14F; font-weight: bold; text-decoration: none; font-size: 16px; }
-.card-arrow-link:hover { text-decoration: underline; }
+.next { right: 20px; }
+.prev { left: 20px; }
 
-.footer {
-    background-color: #c5e2de;
-    padding: 40px 0 20px 0;
-  }
+.inp-find {
+  width: 70%;
+  height: 30px;
+  border-radius: 5px;
+  background-color: #c5c5c5;
+}
 
-  .footer-container {
-    max-width: 1200px;
-    margin: 0px auto;
-    display: flex;
-    justify-content: space-between;
-    padding: 0 20px;
-  }
+.btn-find {
+  margin-left: 20px;
+  height: 30px;
+  padding: 0 10px;
+  background-color: #00b14f;
+  color: #f7f7f7;
+  border-radius: 5px;
+}
 
-  .footer-colum.branding {
-    flex: 1.5; 
-    margin-left: 0;
-  }
-
-  .map-container {
-    margin-top: 15px;
-    border-radius: 8px;
-    overflow: hidden; /* Bo góc cho bản đồ */
-    border: 1px solid rgba(0,0,0,0.1);
-  }
-
-  .footer-colum {
-    flex:1;
-    margin-left: 30px;
-  }
-
-  .footer-colum h4 {
-    font-size: 16px;
-    font-weight: bold;
-    margin-bottom: 15px;
-  }
-
-  .footer-colum ul {
-    list-style: none;
-    padding: 0;
-  }
-
-  .footer-colum ul li {
-    margin-bottom: 10px;
-  }
-
-  .footer-colum ul li a {
-    text-decoration: none;
-    color: #fff;
-    font-size: 14px;
-    transition: 0.3s;
-  }
-
-  .footer-colum ul li a:hover {
-    color: #00ff28;
-  }
-
-  .footer-logo{
-    width: 100px;
-  }
-  .address-box h4{
-    margin-top: 10px;
-  }
-
-  .footer-bottom {
-    text-align: center;
-    border-top: 1px solid rgba(0, 0, 0, 0.1); 
-  }
-
-  .footer-bottom p {
-    font-size: 14px;
-    font-weight: bold;
-  }
 </style>
