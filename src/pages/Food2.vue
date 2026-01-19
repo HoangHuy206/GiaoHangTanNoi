@@ -4,6 +4,7 @@ import { RouterLink } from 'vue-router'
 
 const isMenuOpen = ref(false)
 const activeTab = ref('nguoi-dung')
+const searchQuery = ref('')
 
 
 const menuData = [
@@ -77,6 +78,109 @@ onUnmounted(() => {
 })
 
 // kết thúc chuyển động anh
+
+// bắt đầu 
+
+const restaurants = ref([
+  {
+    id: 1,
+    name: "Cơm Gà 68 - Cơm Gà, Cơm Sườn",
+    type: "Cơm",
+    rating: 4.9,
+    time: "30 phút",
+    distance: "4.4 km",
+    promo: "Giảm 15.000đ",
+    image: new URL('../assets/anhND/comngon.jpg', import.meta.url).href,
+    isFavorite: false, // Trạng thái ban đầu
+  },
+  {
+    id: 2,
+    name: "Lotteria - Vincom Smart City",
+    type: "đồ uống ",
+    rating: 3.8,
+    time: "25 phút",
+    distance: "2.8 km",
+    promo: "Tặng Menu",
+    image: new URL('../assets/anhND/lotte.jpg', import.meta.url).href,
+    isFavorite: false, // Trạng thái ban đầu
+  },
+  {
+    id: 1,
+    name: "cơm bình dân",
+    type: "Cơm",
+    rating: 4.9,
+    time: "30 phút",
+    distance: "4.4 km",
+    promo: "Giảm 15.000đ",
+    image: new URL('../assets/anhND/comtho.jpg', import.meta.url).href,
+    isFavorite: false, // Trạng thái ban đầu
+  },
+  {
+    id: 1,
+    name: "Cơm Gà hầm ",
+    type: "Cơm, Thức ăn nhanh",
+    rating: 4.9,
+    time: "30 phút",
+    distance: "4.4 km",
+    promo: "Giảm 15.000đ",
+    image: new URL('../assets/anhND/gaham.jpg', import.meta.url).href,
+    isFavorite: false, // Trạng thái ban đầu
+  },
+  {
+    id: 1,
+    name: "tocotoc ",
+    type: "đồ uống",
+    rating: 4.9,
+    time: "30 phút",
+    distance: "4.4 km",
+    promo: "Giảm 15.000đ",
+    image: new URL('../assets/anhND/toco.jpg', import.meta.url).href,
+    isFavorite: false, // Trạng thái ban đầu
+  },
+    {
+    id: 1,
+    name: "bún chấm ",
+    type: "đồ ăn chín",
+    rating: 4.9,
+    time: "30 phút",
+    distance: "4.4 km",
+    promo: "Giảm 15.000đ",
+    image: new URL('../assets/anhND/buncham.jpg', import.meta.url).href,
+    isFavorite: false, // Trạng thái ban đầu
+  },
+  {
+    id: 1,
+    name: "mixue ",
+    type: "đồ uống",
+    rating: 4.9,
+    time: "30 phút",
+    distance: "4.4 km",
+    promo: "Giảm 15.000đ",
+    image: new URL('../assets/anhND/mixue.jpg', import.meta.url).href,
+    isFavorite: false, // Trạng thái ban đầu
+  },
+  
+
+])
+
+// icon trái tim 
+const toggleFavorite = (res) => {
+  res.isFavorite = !res.isFavorite
+}
+
+/// phần tìm kiếm 
+const filteredRestaurants = computed(() => {
+  // Nếu không nhập gì, trả về toàn bộ danh sách
+  if (!searchQuery.value.trim()) {
+    return restaurants.value
+  }
+  
+  // Lọc danh sách: chuyển tên quán và từ khóa về chữ thường
+  return restaurants.value.filter(res => 
+    res.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+  )
+})
+
 </script>
 
 <template>
@@ -96,12 +200,12 @@ onUnmounted(() => {
         <span class="support-text">Trung Tâm Hỗ Trợ</span>
         
         <router-link to=" " >
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" color="black">
-  <circle cx="9" cy="21" r="1"></circle>
-  <circle cx="20" cy="21" r="1"></circle>
-  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-</svg>
-</router-link>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" color="black">
+            <circle cx="9" cy="21" r="1"></circle>
+            <circle cx="20" cy="21" r="1"></circle>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+          </svg>
+        </router-link>
 
         <router-link to="/thongtinnguoidung">
             <svg class="icon-action" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
@@ -132,12 +236,9 @@ onUnmounted(() => {
 
     <main class="hero-section">
       <div class="slider-container">
-        <div 
-          class="slides-wrapper" 
-          :style="{ transform: `translateX(-${currentIndex * 100}%)` }"
-        >
+        <div class="slides-wrapper" :style="{ transform: `translateX(-${currentIndex * 100}%)` }">
           <div v-for="(img, index) in images" :key="index" class="slide">
-            <img :src="img.src" :alt="img.alt" />
+              <img :src="img.src" :alt="img.alt" />
           </div>
         </div>
 
@@ -149,7 +250,7 @@ onUnmounted(() => {
             <p class="greeting">Xin Chào Bạn </p>
             <h1 class="title">Chúng tôi nên giao thức ăn của bạn ở đâu hôm nay?</h1>
             <div class="input-group">
-              <input type="text" class="inp-find" placeholder="Nhập Quán bạn muốn tìm..." />
+              <input v-model="searchQuery" type="text" class="inp-find" placeholder="Nhập Quán bạn muốn tìm..." />
               <button class="btn-find">Tìm kiếm</button>
             </div>
           </div>
@@ -159,9 +260,110 @@ onUnmounted(() => {
     
    <!-- kết thúc phần content -->
 
+   <!-- bắt đầu restaurant -->
+    <section class="restaurant-container">
+        <h2 class="title-section">Ưu đãi Giao Hàng Tận Nơi tại <span class="green-text">Hà Nội</span></h2>
+    
+      <div class="restaurant-grid">
+        
+        <router-link v-for="res in filteredRestaurants" :key="res.id" class="restaurant-card">
+          <div class="image-box">
+            <img :src="res.image" alt="restaurant" />
+            <span class="promo-label">Promo</span>
+          </div>
+
+          <div class="favorite-icon" @click.prevent="toggleFavorite(res)">
+            <span v-if="res.isFavorite">❤️</span>
+            <span v-else>🤍</span>
+          </div>
+      
+          <div class="info-box">
+            <h3 class="res-name">{{ res.name }}</h3>
+            <p class="res-type">{{ res.type }}</p>
+            <div class="res-meta">
+              <span>⭐ {{ res.rating }}</span>
+              <span>{{ res.time }} • {{ res.distance }}</span>
+            </div>
+            <div class="res-discount">
+              <span class="icon">🎫</span> {{ res.promo }}
+            </div>
+          </div>
+        </router-link>
+
+        <div v-if="filteredRestaurants.length === 0" class="no-results">
+          <p>Rất tiếc, không tìm thấy quán nào khớp với "{{ searchQuery }}"</p>
+        </div>
+        
+      </div>
+    </section>
+    <!-- kết thúc phần restaurant -->
+
+    <!-- bắt đầu phần words -->
+    <div class="words">
+      <h1>Vì Sao Bạn Nên Order trên Giao Hàng Tận Nơi ?</h1>
+      
+      <p><span><b>Nhanh Nhất-</b></span> chúng tôi cung cấp dịch vụ giao đồ ăn nhanh nhất trên thị trường.</p>
+      <p><span><b>Dễ Dàng Nhất-</b></span> Bạn chỉ cần thực hiện vài cú nhấp chuột là có thể đặt đồ ăn </p>
+      <p><span><b>Đáp Ứng Mọi Nhu Cầu -</b></span> Từ Món đặc sản địa phương đến các nhà hàng được ưa thích ,giúp bạn có nhiều sự lựa chọn </p>
+      <p><span><b>Thanh Toán Dễ Dàng -</b></span> Giao và nhận đồ ăn  thật dễ dàng , thanh toán bằng thẻ ví đơn giản .</p>
+    </div>
+
+    <!-- kết thúc phần words -->
+
+    <!-- fooder -->
+
+    <div class="footer">
+      <div class="footer-container">
+        <div class="footer-column branding">
+          <img src="@/assets/anh.logo/anhnen.png" alt="Logo Footer" class="footer-logo" style="width: 200px; height: 150px;">
+          <div class="address-box">
+            <h4>ĐỊA CHỈ</h4>
+            <div class="map-container">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3724.296073307168!2d105.7475674103227!3d21.020836187970833!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3134549c574476c3%3A0xd3c6af79105ea6da!2zVHLGsOG7nW5nIENhbyDEkeG6s25nIEPDtG5nIG5naOG7hyBDYW8gSMOgIE7hu5lp!5e0!3m2!1svi!2s!4v1768833697804!5m2!1svi!2s""
+                width="100%"
+                height="200"
+                style="border:0;"
+                allowfullscreen
+                loading="lazy"
+              ></iframe>
+            </div>
+          </div>
+        </div>
+
+        <div class="footer-column">
+          <h4>Người dùng</h4>
+          <ul>
+            <li><router-link to="">Có gì mới?</router-link></li>
+            <li><router-link to="">Món ngon</router-link></li>
+            <li><router-link to="">Dịch vụ Food</router-link></li>
+          </ul>
+        </div>
+
+        <div class="footer-column">
+          <h4>Đối tác tài xế</h4>
+          <ul>
+            <li><router-link to="">Thông tin mới</router-link></li>
+            <li><router-link to="">Di chuyển</router-link></li>
+            <li><router-link to="">Trung tâm tài xế</router-link></li>
+          </ul>
+        </div>
+
+        <div class="footer-column">
+          <h4>Hợp tác</h4>
+          <ul>
+            <li><router-link to="">Giao Hàng Tận Nơi</router-link></li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="footer-bottom">
+        <p>Theo dõi chúng tôi @2026</p>
+      </div>
+    </div>
+
   </div> 
   
-
 </template>
 <style scoped>
 /* --- CÀI ĐẶT CHUNG --- */
@@ -327,4 +529,178 @@ onUnmounted(() => {
   border-radius: 5px;
 }
 
+/* bắt đầu restaurant */
+
+.restaurant-container {
+  padding: 30px 80px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.title-section {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.green-text { color: #00b14f; }
+
+/* CHIA Ô TẠI ĐÂY */
+.restaurant-grid {
+  display: grid;
+  /* Chia làm 4 cột đều nhau, nếu màn hình nhỏ tự nhảy dòng */
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); 
+  gap: 20px; /* Khoảng cách giữa các ô */
+}
+
+.restaurant-card {
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: 0.3s;
+  text-decoration: none;
+}
+
+.restaurant-card:hover { transform: translateY(-5px); }
+
+.image-box {
+  position: relative;
+  width: 100%;
+  height: 160px;
+}
+
+.image-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.promo-label {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: #00b14f;
+  color: white;
+  padding: 2px 8px;
+  font-size: 12px;
+  border-radius: 4px;
+}
+
+.res-name {
+  font-size: 16px;
+  font-weight: bold;
+  margin: 10px 0 5px;
+  /* Giới hạn tên quán 1 dòng để không làm lệch ô */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.res-type { color: #666; font-size: 14px; }
+
+.res-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin: 8px 0;
+  color: #333;
+}
+
+.res-discount {
+  border-top: 1px solid #eee;
+  padding-top: 8px;
+  font-size: 13px;
+  color: #333;
+}
+/* icon trái tim */
+.image-box {
+  position: relative; /* Gốc tọa độ cho icon con */
+  width: 100%;
+  height: 160px;
+}
+
+.favorite-icon {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(255, 255, 255, 0.9); /* Nền trắng mờ để nổi bật icon */
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  transition: all 0.2s ease;
+  z-index: 10;
+  font-size: 18px;
+}
+
+.favorite-icon:hover {
+  transform: scale(1.1);
+  background: #ffffff;
+}
+
+/* bắt đầu phần words */
+
+.words {
+  padding: 60px 80px; /* Tạo khoảng cách 2 bên giống với phần trên */
+  max-width: 1200px;
+  margin: 0 auto;
+  clear: both; /* Đảm bảo không bị ảnh hưởng bởi các phần tử float (nếu có) */
+  display: block; /* Đảm bảo nó là một khối riêng biệt */
+}
+
+.words h1 {
+  margin-bottom: 30px;
+}
+
+.words p {
+  line-height: 30px;
+}
+
+/* kết thúc phần Words */
+
+/* bắt đầu phần footer */
+.footer {
+  background-color: #f0fbf4; /* Màu nền nhẹ hơn */
+  padding: 60px 0 20px 0;
+  margin-top: 50px;
+  border-top: 4px solid #00b14f;
+}
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap; /* Cho phép xuống dòng trên mobile */
+  justify-content: space-between;
+  padding: 0 20px;
+  gap: 30px;
+}
+.footer-column {
+  flex: 1;
+  min-width: 200px;
+}
+.footer-logo { height: 40px; margin-bottom: 20px; }
+.footer-column h4 { margin-bottom: 20px; font-weight: bold; color: #333; }
+.footer-column ul { list-style: none; padding: 0; }
+.footer-column ul li { margin-bottom: 10px; }
+.footer-column ul li a {
+  text-decoration: none;
+  color: #555;
+  font-size: 14px;
+  transition: 0.2s;
+}
+.footer-column ul li a:hover { color: #00b14f; padding-left: 5px; }
+
+.footer-bottom {
+  text-align: center;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  padding-top: 20px;
+  margin-top: 40px;
+  color: #888;
+  font-size: 14px;
+}
 </style>
