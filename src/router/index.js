@@ -8,6 +8,7 @@ import mainSp from '../pages/SanPham/mainSP.vue'
 import phanhoidangky from '../pages/phanhoidangky.vue'
 import Food from '../pages/Food.vue'
 import products from '../pages/SanPham/Products/GioHang.vue'
+import dangkytaixe from '@/pages/dangkytaixe.vue'
 
 // THÊM: Import trang chủ của tài xế
 import trangchulaixe from '../pages/trangchulaixe.vue'
@@ -83,6 +84,13 @@ const router = createRouter({
       name: 'Food',
       component: Food ,      
       meta: { title: 'Food' }
+    },
+
+    {
+       path: '/dangkytaixe',      
+      name: 'dangkytaixe',
+      component: dangkytaixe ,      
+      meta: { title: 'Đăng ký tài xế' }
     }
   ]
 })
