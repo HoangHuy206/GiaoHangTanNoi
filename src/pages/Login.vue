@@ -29,9 +29,9 @@
               />
             </div>
 
-            <router-link to="/Food2">
+            
             <button type="submit" class="btn btn-login">Đăng Nhập</button>
-            </router-link>
+          
             
             <div class="divider">
               <span>Hoặc</span>
@@ -90,7 +90,7 @@ const handleLogin = async () => {
         router.push('/trangchulaixe'); 
       } else {
         alert("Đăng nhập thành công!");
-        router.push('/home');
+        router.push('/Food2');
       }
       
     } else {
