@@ -42,7 +42,7 @@ const goToUserRegister = () => {
 
 // Hàm chuyển hướng sang trang Đăng ký Tài xế (Bạn cần tạo thêm trang này sau)
 const goToDriverRegister = () => {
-  router.push('/register-driver'); 
+  router.push('/dangkytaixe'); 
 };
 </script>
 

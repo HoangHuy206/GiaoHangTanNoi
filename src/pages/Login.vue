@@ -29,7 +29,12 @@
               />
             </div>
 
+            
             <button type="submit" class="btn btn-login">Đăng Nhập</button>
+<<<<<<< HEAD
+=======
+          
+>>>>>>> 5735f8549e1366ea590a3bdeab59692e786ddd87
             
             <div class="divider">
               <span>Hoặc</span>
@@ -88,7 +93,7 @@ const handleLogin = async () => {
         router.push('/trangchulaixe'); 
       } else {
         alert("Đăng nhập thành công!");
-        router.push('/home');
+        router.push('/Food2');
       }
       
     } else {
