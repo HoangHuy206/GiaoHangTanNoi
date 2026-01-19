@@ -9,6 +9,9 @@ import dangkytaixe from '../pages/dangkytaixe.vue' // Đã đổi @ thành .. ch
 import trangchulaixe from '../pages/trangchulaixe.vue'
 import GioHang from '../pages/SanPham/Products/GioHang.vue' 
 
+
+// (Đã xóa dòng "import products..." vì nó bị trùng với GioHang và không dùng tới)
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
