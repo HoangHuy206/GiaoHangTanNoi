@@ -98,7 +98,7 @@ watch(isMenuOpen, (open) => {
     </div>
 
     <div class="background-img">
-      <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070&auto=format&fit=crop" alt="Background">
+      <img src="../assets/anh.logo/z7435869738899_000_e53e72bd89e38a070e1aa4f3a917f074.jpg" alt="Background">
     </div>
 
     <div class="content-intro">
@@ -188,14 +188,7 @@ watch(isMenuOpen, (open) => {
           <div class="address-box">
             <h4>ĐỊA CHỈ</h4>
             <div class="map-container">
-              <iframe
-                src="https://googleusercontent.com/maps.google.com/0"
-                width="100%"
-                height="200"
-                style="border:0;"
-                allowfullscreen
-                loading="lazy"
-              ></iframe>
+              <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3724.296073305156!2d105.7475727747142!3d21.020836188051735!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3134549c574476c3%3A0xd3c6af79105ea6da!2zVHLGsOG7nW5nIENhbyDEkeG6s25nIEPDtG5nIG5naOG7hyBDYW8gSMOgIE7hu5lp!5e0!3m2!1svi!2s!4v1768845233825!5m2!1svi!2s" width="300" height="200" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
             </div>
           </div>
         </div>
@@ -372,7 +365,7 @@ header {
 
 .background-img img {
   width: 100%;
-  height: 400px;
+  height: 600px;
   object-fit: cover;
   display: block;
 }
