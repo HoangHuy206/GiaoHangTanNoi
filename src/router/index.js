@@ -8,7 +8,11 @@ import mainSp from '../pages/SanPham/mainSP.vue'
 import phanhoidangky from '../pages/phanhoidangky.vue'
 import Food from '../pages/Food.vue'
 import products from '../pages/SanPham/Products/GioHang.vue'
+<<<<<<< HEAD
 import thunhap from'../pages/taixe/thunhap.vue'
+=======
+import dangkytaixe from '@/pages/dangkytaixe.vue'
+>>>>>>> 48fa3e3ba3cc1ed4860735f4ffcf940b3d5f2f8c
 
 // THÊM: Import trang chủ của tài xế
 import trangchulaixe from '../pages/trangchulaixe.vue'
@@ -88,11 +92,11 @@ const router = createRouter({
     },
 
     {
-      path: '/thunhap',
-      name: 'thunhap',
-      component: thunhap, 
-      meta: { title: 'Thu Nhập' } 
-    },
+       path: '/dangkytaixe',      
+      name: 'dangkytaixe',
+      component: dangkytaixe ,      
+      meta: { title: 'Đăng ký tài xế' }
+    }
   ]
 })
 
