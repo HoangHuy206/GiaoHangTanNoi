@@ -10,6 +10,14 @@
         <form @submit.prevent="handleRegister" class="mini-form">
           <input 
             type="text" 
+            v-model="fullname" 
+            placeholder="Họ và tên của bạn" 
+            class="mini-input"
+            required style="margin-right: 20px;"
+          />
+
+          <input 
+            type="text" 
             v-model="username" 
             placeholder="Tên đăng nhập" 
             class="mini-input"
@@ -47,6 +55,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
+const fullname = ref(''); // Thêm ref cho Họ tên
 const username = ref('');
 const password = ref('');
 const confirmPassword = ref('');
@@ -59,13 +68,14 @@ const handleRegister = async () => {
   }
 
   try {
-    // 2. Gửi dữ liệu về Server (Port 3000)
+    // 2. Gửi dữ liệu về Server (Bao gồm cả fullname)
     const response = await fetch('http://localhost:3000/register', { 
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
+        fullname: fullname.value, // Gửi họ tên lên Server
         username: username.value,
         password: password.value
       })
@@ -76,7 +86,7 @@ const handleRegister = async () => {
     // 3. Xử lý kết quả
     if (response.ok) {
       alert("Đăng ký thành công! Hãy đăng nhập ngay.");
-      router.push('/login'); // Chuyển sang trang đăng nhập
+      router.push('/login'); 
     } else {
       alert("Lỗi: " + (data.message || "Đăng ký thất bại"));
     }
@@ -89,7 +99,7 @@ const handleRegister = async () => {
 </script>
 
 <style scoped>
-/* Code CSS giữ nguyên như bản gốc của bạn */
+/* Giữ nguyên phần CSS cũ của bạn */
 .register-page {
   background-color: #e8dbc8;
   min-height: 100vh;
