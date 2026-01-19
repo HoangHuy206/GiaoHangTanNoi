@@ -1,216 +1,288 @@
 <script setup>
-// --- PHẦN 1: IMPORT THƯ VIỆN ---
 import { ref, onMounted, onUnmounted } from 'vue'
 import L from 'leaflet'
-import 'leaflet/dist/leaflet.css' 
-// Import icon cũ của bạn (giữ nguyên đường dẫn)
+import 'leaflet/dist/leaflet.css'
 import '../assets/icon/icon/themify-icons-font/themify-icons-font/themify-icons/themify-icons.css'
 
-// --- PHẦN 2: CẤU HÌNH SERVER BACKEND ---
-// Đây là link API Server của bạn. 
-// Code sẽ gọi vào đây để hỏi: "Có đơn nào không?"
-const API_URL = "http://localhost:3000/api/find-order"; 
+// ====== CONFIG ======
+const BASE_URL = import.meta.env.VITE_API_BASE || "http://localhost:3000"
+const API_FIND_ORDER = `${BASE_URL}/api/find-order`          // GET
+const API_DRIVER_ONLINE = `${BASE_URL}/api/driver/online`    // POST
+const API_DRIVER_OFFLINE = `${BASE_URL}/api/driver/offline`  // POST
 
-// --- PHẦN 3: KHAI BÁO BIẾN (STATE) ---
-const isOnline = ref(false)          // Trạng thái nút Bật/Tắt
-const isShowModal = ref(false)       // Modal dịch vụ
-const incomingOrder = ref(null)      // Biến chứa thông tin đơn hàng thật
-const driverLocation = ref(null)     // Vị trí hiện tại của tài xế
-let scanningTimer = null;            // Bộ đếm thời gian quét đơn
+// TODO: sau này lấy từ login/localStorage
+const DRIVER_ID = 1
 
-// Biến quản lý bản đồ
-const mapContainer = ref(null);
-let map = null;
-let driverMarker = null;
-let routeLayer = null;
+// ====== STATE ======
+const isOnline = ref(false)
+const isShowModal = ref(false)
+const incomingOrder = ref(null)
+const driverLocation = ref(null)
 
-// --- PHẦN 4: CÁC HÀM XỬ LÝ ---
+let scanningTimer = null
+let locationWatchId = null
+let lastSentAt = 0 // throttle gửi vị trí lên server
 
-// 4.1. Khởi tạo bản đồ (Chạy 1 lần khi load trang)
+const mapContainer = ref(null)
+let map = null
+let driverMarker = null
+let routeLayer = null
+let shopMarker = null
+
+// ====== MAP ======
 const initMap = () => {
-    // Mặc định view ở Hà Nội
-    map = L.map(mapContainer.value).setView([21.0285, 105.8542], 14);
+  map = L.map(mapContainer.value).setView([21.0285, 105.8542], 14)
 
-    // Load lớp bản đồ OpenStreetMap (Miễn phí)
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map)
 
-    // Fix lỗi mất icon marker mặc định của thư viện Leaflet
-    delete L.Icon.Default.prototype._getIconUrl;
-    L.Icon.Default.mergeOptions({
-        iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
-        iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
-        shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
-    });
-};
+  delete L.Icon.Default.prototype._getIconUrl
+  L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
+    iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+  })
+}
 
-// 4.2. Lấy vị trí GPS (Có cơ chế chống lỗi cho máy tính)
-const getCurrentLocation = () => {
-  return new Promise((resolve, reject) => {
+const updateMapLocation = (pos) => {
+  if (!map) return
+  map.setView([pos.lat, pos.lng], 16) // zoom cao hơn 1 chút để thấy đúng vị trí
+
+  if (driverMarker) driverMarker.setLatLng([pos.lat, pos.lng])
+  else {
+    driverMarker = L.marker([pos.lat, pos.lng]).addTo(map)
+      .bindPopup("Vị trí của bạn").openPopup()
+  }
+}
+
+// ====== API HELPER ======
+const postJson = async (url, body) => {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  })
+  return res
+}
+
+// throttle gửi vị trí (5s/lần) để khỏi spam server
+const sendLocationToServer = async (lat, lng) => {
+  const now = Date.now()
+  if (now - lastSentAt < 5000) return
+  lastSentAt = now
+  try {
+    await postJson(API_DRIVER_ONLINE, { driverId: DRIVER_ID, lat, lng })
+  } catch (e) {}
+}
+
+// ====== GPS (CHUẨN HƠN) ======
+const getCurrentLocationOnce = () => {
+  return new Promise((resolve) => {
     if (!navigator.geolocation) {
-       // Nếu trình duyệt quá cũ
-       resolve({ lat: 21.0285, lng: 105.8542 }); 
-       return;
+      alert("Thiết bị/trình duyệt không hỗ trợ định vị. Tạm dùng tọa độ test (Hà Nội).")
+      resolve({ lat: 21.0285, lng: 105.8542, isMock: true })
+      return
     }
 
     navigator.geolocation.getCurrentPosition(
-      // CASE 1: Lấy được GPS thật (Điện thoại/Laptop xịn)
       (position) => {
-        const pos = { 
-          lat: position.coords.latitude, 
-          lng: position.coords.longitude 
-        };
-        resolve(pos);
-        updateMapLocation(pos);
+        resolve({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          accuracy: position.coords.accuracy, // mét
+          isMock: false
+        })
       },
-      // CASE 2: Máy tính không có GPS -> Tự động dùng giả lập
-      (error) => {
-        console.warn("Máy tính không có GPS -> Chuyển sang chế độ Test (Hà Nội).");
-        const fakePos = { lat: 21.0285, lng: 105.8542 }; // Toạ độ Hồ Gươm
-        resolve(fakePos);
-        updateMapLocation(fakePos);
+      (err) => {
+        // Thường là do user từ chối quyền hoặc site không phải HTTPS khi deploy
+        console.warn("Không lấy được GPS:", err.message)
+        alert("Không lấy được vị trí GPS. Hãy bật quyền định vị (và dùng HTTPS khi lên hosting). Tạm dùng tọa độ test (Hà Nội).")
+        resolve({ lat: 21.0285, lng: 105.8542, isMock: true })
       },
-      { enableHighAccuracy: false, timeout: 5000 }
-    );
-  });
-};
-
-// Hàm cập nhật vị trí marker trên bản đồ
-const updateMapLocation = (pos) => {
-    if (map) {
-        map.setView([pos.lat, pos.lng], 15);
-        if (driverMarker) {
-            driverMarker.setLatLng([pos.lat, pos.lng]);
-        } else {
-            driverMarker = L.marker([pos.lat, pos.lng]).addTo(map)
-                .bindPopup("Vị trí của bạn").openPopup();
-        }
-    }
+      {
+        enableHighAccuracy: true, // quan trọng để đúng vị trí
+        timeout: 15000,
+        maximumAge: 0
+      }
+    )
+  })
 }
 
-// 4.3. Gọi API tìm đơn thật
-const checkRealOrder = async (lat, lng) => {
-    try {
-        // Gọi lên Server
-        const url = `${API_URL}?lat=${lat}&lng=${lng}`;
-        // console.log("Đang quét đơn...", url); // Bỏ comment để debug
+const startWatchLocation = () => {
+  if (!navigator.geolocation) return
 
-        const response = await fetch(url);
-        
-        if (response.ok) {
-            const data = await response.json();
-            
-            // Nếu Server báo có đơn (data.success = true)
-            if (data.success && data.order) {
-                console.log("🔥 CÓ ĐƠN HÀNG MỚI!");
-                
-                // Gán dữ liệu thật vào giao diện
-                incomingOrder.value = {
-                    id: data.order.id,
-                    name: data.order.food_name,      
-                    price: data.order.total_price,   
-                    image: data.order.image_url,     
-                    restaurant: data.order.shop_name,
-                    addressPick: data.order.pickup_address,
-                    addressDrop: data.order.delivery_address,
-                    customer: data.order.customer_name,
-                    distance: data.order.distance_km,
-                    // Toạ độ quán để vẽ đường
-                    shopLocation: { 
-                        lat: parseFloat(data.order.shop_lat), 
-                        lng: parseFloat(data.order.shop_lng) 
-                    }
-                };
+  // tránh bị nhiều watch chồng lên nhau
+  if (locationWatchId !== null) {
+    navigator.geolocation.clearWatch(locationWatchId)
+    locationWatchId = null
+  }
 
-                // Vẽ đường đi
-                drawRoute({ lat, lng }, incomingOrder.value.shopLocation);
-                
-                // Dừng quét (để tài xế thao tác nhận/huỷ)
-                clearInterval(scanningTimer);
-            }
-        }
-    } catch (error) {
-        // Lỗi này thường do chưa bật Server Backend
-        // console.error("Lỗi kết nối Server:", error); 
+  locationWatchId = navigator.geolocation.watchPosition(
+    async (position) => {
+      const pos = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude
+      }
+      driverLocation.value = pos
+      updateMapLocation(pos)
+
+      // cập nhật lên server (throttle)
+      await sendLocationToServer(pos.lat, pos.lng)
+    },
+    (err) => {
+      console.warn("watchPosition lỗi:", err.message)
+    },
+    {
+      enableHighAccuracy: true,
+      maximumAge: 2000,
+      timeout: 15000
     }
-};
+  )
+}
 
-// 4.4. Vẽ đường đi (Dùng OSRM API - Miễn phí)
+const stopWatchLocation = () => {
+  if (locationWatchId !== null && navigator.geolocation) {
+    navigator.geolocation.clearWatch(locationWatchId)
+  }
+  locationWatchId = null
+}
+
+// ====== ROUTE ======
 const drawRoute = async (start, end) => {
-    if (routeLayer) map.removeLayer(routeLayer);
+  try {
+    if (routeLayer) map.removeLayer(routeLayer)
+    if (shopMarker) map.removeLayer(shopMarker)
 
-    const url = `https://router.project-osrm.org/route/v1/driving/${start.lng},${start.lat};${end.lng},${end.lat}?overview=full&geometries=geojson`;
+    const url = `https://router.project-osrm.org/route/v1/driving/${start.lng},${start.lat};${end.lng},${end.lat}?overview=full&geometries=geojson`
+    const res = await fetch(url)
+    const data = await res.json()
 
-    try {
-        const res = await fetch(url);
-        const data = await res.json();
-        if (data.routes && data.routes.length > 0) {
-            routeLayer = L.geoJSON(data.routes[0].geometry, {
-                style: { color: 'blue', weight: 5 }
-            }).addTo(map);
-            
-            map.fitBounds(routeLayer.getBounds(), { padding: [50, 50] });
-            L.marker([end.lat, end.lng]).addTo(map).bindPopup("Điểm lấy hàng").openPopup();
+    if (data.routes && data.routes.length > 0) {
+      routeLayer = L.geoJSON(data.routes[0].geometry, { style: { color: 'blue', weight: 5 } }).addTo(map)
+      map.fitBounds(routeLayer.getBounds(), { padding: [50, 50] })
+      shopMarker = L.marker([end.lat, end.lng]).addTo(map).bindPopup("Điểm lấy hàng").openPopup()
+    }
+  } catch (e) {}
+}
+
+const clearRoute = () => {
+  if (routeLayer && map) map.removeLayer(routeLayer)
+  routeLayer = null
+  if (shopMarker && map) map.removeLayer(shopMarker)
+  shopMarker = null
+}
+
+// ====== FIND ORDER ======
+const checkRealOrder = async () => {
+  try {
+    if (!isOnline.value) return
+    if (incomingOrder.value) return
+    if (!driverLocation.value) return
+
+    const { lat, lng } = driverLocation.value
+    const url = `${API_FIND_ORDER}?driverId=${DRIVER_ID}&lat=${lat}&lng=${lng}`
+
+    const response = await fetch(url)
+    if (!response.ok) return
+
+    const data = await response.json()
+
+    if (data.success && data.order) {
+      incomingOrder.value = {
+        id: data.order.id,
+        name: data.order.food_name,
+        price: data.order.total_price,
+        image: data.order.image_url,
+        restaurant: data.order.shop_name,
+        addressPick: data.order.pickup_address,
+        addressDrop: data.order.delivery_address,
+        customer: data.order.customer_name,
+        distance: data.order.distance_km,
+        shopLocation: {
+          lat: parseFloat(data.order.shop_lat),
+          lng: parseFloat(data.order.shop_lng)
         }
-    } catch (e) {}
-};
+      }
 
-// 4.5. Xử lý nút BẬT/TẮT
+      await drawRoute({ lat, lng }, incomingOrder.value.shopLocation)
+
+      // dừng quét để tài xế thao tác
+      stopScanning()
+    }
+  } catch (e) {}
+}
+
+// ====== SCAN CONTROL ======
+const startScanning = () => {
+  stopScanning()
+  scanningTimer = setInterval(checkRealOrder, 5000)
+}
+const stopScanning = () => {
+  if (scanningTimer) clearInterval(scanningTimer)
+  scanningTimer = null
+}
+
+// ====== TOGGLE ======
 const toggleConnection = async () => {
   if (!isOnline.value) {
-    // === BẬT ===
-    const location = await getCurrentLocation(); // Lấy vị trí (đã an toàn trên PC)
-    driverLocation.value = location;
-    isOnline.value = true; 
-    
-    // Bắt đầu quét đơn (5 giây/lần)
-    scanningTimer = setInterval(() => {
-        if (isOnline.value && !incomingOrder.value) {
-            checkRealOrder(location.lat, location.lng);
-        }
-    }, 5000);
+    // ===== BẬT =====
+    const pos = await getCurrentLocationOnce()
+    driverLocation.value = { lat: pos.lat, lng: pos.lng }
+    updateMapLocation(driverLocation.value)
 
+    // báo server online + vị trí ban đầu
+    await postJson(API_DRIVER_ONLINE, { driverId: DRIVER_ID, lat: pos.lat, lng: pos.lng })
+
+    isOnline.value = true
+
+    // theo dõi vị trí liên tục (đúng vị trí khi di chuyển)
+    startWatchLocation()
+
+    // quét đơn theo vị trí mới nhất
+    startScanning()
   } else {
-    // === TẮT ===
-    isOnline.value = false;
-    clearInterval(scanningTimer);
-    incomingOrder.value = null;
-    driverLocation.value = null;
-    if (routeLayer) map.removeLayer(routeLayer);
-  }
-};
+    // ===== TẮT =====
+    isOnline.value = false
+    stopScanning()
+    stopWatchLocation()
 
-// Các hàm phụ trợ modal/nút bấm
+    incomingOrder.value = null
+    driverLocation.value = null
+    clearRoute()
+
+    await postJson(API_DRIVER_OFFLINE, { driverId: DRIVER_ID })
+  }
+}
+
+// ====== MODAL ======
 const openModal = () => isShowModal.value = true
 const closeModal = () => isShowModal.value = false
 
-const acceptOrder = () => { 
-    alert("Đã nhận đơn! (Hãy gọi API cập nhật trạng thái đơn hàng)"); 
-    incomingOrder.value = null; 
-    if(routeLayer) map.removeLayer(routeLayer);
-    toggleConnection(); // Tiếp tục quét
+// ====== ACCEPT/REJECT ======
+const acceptOrder = async () => {
+  alert("Đã nhận đơn! (sau này gọi API accept để cập nhật DB)")
+  incomingOrder.value = null
+  clearRoute()
+  if (isOnline.value) startScanning()
 }
 
-const rejectOrder = () => { 
-    incomingOrder.value = null; 
-    if(routeLayer) map.removeLayer(routeLayer);
-    toggleConnection(); // Tiếp tục quét
+const rejectOrder = async () => {
+  incomingOrder.value = null
+  clearRoute()
+  if (isOnline.value) startScanning()
 }
 
-// Lifecycle Hooks
-onMounted(() => {
-    initMap();
-});
-
+onMounted(() => initMap())
 onUnmounted(() => {
-    clearInterval(scanningTimer);
-});
+  stopScanning()
+  stopWatchLocation()
+})
 </script>
 
 <template>
+  <!-- GIỮ NGUYÊN template của bạn -->
   <div class="dashboard-container">
-    
     <aside class="sidebar">
       <div class="logo-area"><h2>Tài xế Pro</h2></div>
       <ul class="nav-links">
@@ -235,8 +307,8 @@ onUnmounted(() => {
         </div>
         <hr class="divider"/>
         <div class="address-timeline">
-           <div class="point"><i class="ti-home pickup-icon"></i> <div class="addr-detail"><small>Lấy tại quán:</small><b>{{ incomingOrder.restaurant }}</b><p>{{ incomingOrder.addressPick }}</p></div></div>
-           <div class="point"><i class="ti-location-pin drop-icon"></i><div class="addr-detail"><small>Giao khách:</small><b>{{ incomingOrder.customer }}</b><p>{{ incomingOrder.addressDrop }}</p></div></div>
+          <div class="point"><i class="ti-home pickup-icon"></i> <div class="addr-detail"><small>Lấy tại quán:</small><b>{{ incomingOrder.restaurant }}</b><p>{{ incomingOrder.addressPick }}</p></div></div>
+          <div class="point"><i class="ti-location-pin drop-icon"></i><div class="addr-detail"><small>Giao khách:</small><b>{{ incomingOrder.customer }}</b><p>{{ incomingOrder.addressDrop }}</p></div></div>
         </div>
         <div class="btn-group">
           <button @click="rejectOrder" class="btn-ignore">Bỏ qua</button>
@@ -261,19 +333,19 @@ onUnmounted(() => {
         </button>
 
         <div class="quick-actions">
-           <div class="action-item"><div class="circle-icon" @click="openModal"><i class="ti-car"></i></div><span>Loại dịch vụ</span></div>
-           <div class="action-item"><div class="circle-icon"><i class="ti-location-pin"></i></div><span>Điểm đến</span></div>
-           <div class="action-item"><div class="circle-icon"><i class="ti-bolt"></i></div><span>Tự động nhận</span></div>
-           <div class="action-item"><div class="circle-icon"><i class="ti-more"></i></div><span>Xem thêm</span></div>
+          <div class="action-item"><div class="circle-icon" @click="openModal"><i class="ti-car"></i></div><span>Loại dịch vụ</span></div>
+          <div class="action-item"><div class="circle-icon"><i class="ti-location-pin"></i></div><span>Điểm đến</span></div>
+          <div class="action-item"><div class="circle-icon"><i class="ti-bolt"></i></div><span>Tự động nhận</span></div>
+          <div class="action-item"><div class="circle-icon"><i class="ti-more"></i></div><span>Xem thêm</span></div>
         </div>
       </div>
     </main>
 
     <div class="modal-overlay" v-if="isShowModal">
-        <div class="modal-box">
-            <span class="close-btn" @click="closeModal">×</span>
-            <div class="modal-body"><h2>Dịch vụ</h2><p>Food</p><p>Giao hàng nhanh</p></div>
-        </div>
+      <div class="modal-box">
+        <span class="close-btn" @click="closeModal">×</span>
+        <div class="modal-body"><h2>Dịch vụ</h2><p>Food</p><p>Giao hàng nhanh</p></div>
+      </div>
     </div>
   </div>
 </template>
