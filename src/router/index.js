@@ -9,9 +9,11 @@ import mainSp from '../pages/SanPham/mainSP.vue'
 import phanhoidangky from '../pages/phanhoidangky.vue'
 import Food from '../pages/Food.vue'
 import dangkytaixe from '../pages/dangkytaixe.vue' // Đã đổi @ thành .. cho đồng bộ
+import thongtinnguoidung from '@/pages/ThongTin/thongtinnguoidung.vue'
+import Food2 from '@/pages/Food2.vue'
 
 // Import trang chủ tài xế & Giỏ hàng
-import trangchulaixe from '../pages/trangchulaixe.vue'
+import trangchulaixe from '@/pages/trangchulaixe.vue'
 import GioHang from '../pages/SanPham/Products/GioHang.vue' 
 // (Đã xóa dòng "import products..." vì nó bị trùng với GioHang và không dùng tới)
 
