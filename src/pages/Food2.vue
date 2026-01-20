@@ -3,7 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { RouterLink } from 'vue-router'
 
 // --- 1. IMPORT CART BUS ĐỂ GIAO TIẾP VỚI GIỎ HÀNG ---
-// Lưu ý: Đảm bảo đường dẫn này đúng với cấu trúc thư mục của bạn
+// Lưu ý: Kiểm tra lại đường dẫn './SanPham/Products/giohang.vue' có đúng với thư mục máy bạn không nhé
 import { cartBus } from './SanPham/Products/giohang.vue'
 
 const isMenuOpen = ref(false)
@@ -68,7 +68,7 @@ const restaurants = ref([
   { id: 7, name: "Mixue", type: "đồ uống", rating: 4.9, time: "30 phút", distance: "4.4 km", promo: "Giảm 15.000đ", image: new URL('../assets/anhND/mixue.jpg', import.meta.url).href, isFavorite: false },
 ])
 
-// MỚI: Hàm lấy khóa lưu trữ duy nhất theo ID/Username người dùng
+// Hàm lấy khóa lưu trữ duy nhất theo ID/Username người dùng
 const getFavoritesKey = () => {
   const storedUser = localStorage.getItem('userLogin')
   if (storedUser) {
@@ -206,12 +206,8 @@ const openCart = () => {
       <h2 class="title-section">Ưu đãi Giao Hàng Tận Nơi tại <span class="green-text">Hà Nội</span></h2>
       <div class="restaurant-grid">
         <div v-for="res in filteredRestaurants" :key="res.id" class="restaurant-card-wrapper">
-<<<<<<< HEAD
           
-          <router-link to="/sp01" class="restaurant-card">
-=======
           <router-link :to="'/restaurant/' + res.id" class="restaurant-card">
->>>>>>> ed367e7938d99dade3a2995ca0c9bd39d1aa35cf
             <div class="image-box">
               <img :src="res.image" alt="restaurant" />
               <span class="promo-label">Promo</span>
@@ -228,7 +224,6 @@ const openCart = () => {
               </div>
             </div>
           </router-link>
-
           <div class="favorite-icon" @click.stop.prevent="toggleFavorite(res)">
             <span v-if="res.isFavorite" style="color: #ff4757;">❤️</span>
             <span v-else>🤍</span>
@@ -245,7 +240,7 @@ const openCart = () => {
             <h4>ĐỊA CHỈ</h4>
             <div class="map-container">
               <iframe 
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3724.3824554371583!2d105.74418387595463!3d21.01737758063065!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31345383f733e8fb%3A0xc39200389367332b!2zVHLGsOG7nW5nIENhbyDEkeG6s25nIEPDtG5nIG5naOG7hyBDYW8gSMOgIE7hu5lp!5e0!3m2!1svi!2s!4v1705680000000" 
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3724.0968141837515!2d105.7800937149326!3d21.028811885998315!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3135ab86ce1358d3%3A0xc3f58a36e9c91354!2zQ8O0bmcgVmnDqm4gQ-G6p3UgR2nhuqV5!5e0!3m2!1svi!2s!4v1647852395632!5m2!1svi!2s" 
                 width="100%" height="200" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
             </div>
           </div>
