@@ -15,6 +15,7 @@ import toco from '@/pages/SanPham/MuaSP/toco.vue'
 import thongtintaixe from '@/pages/ThongTin/thongtintaixe.vue'
 import trangchulaixe from '@/pages/trangchulaixe.vue'
 import giohang from '@/pages/SanPham/Products/giohang.vue'
+import thanhtoan from '@/pages/SanPham/Products/thanhtoan.vue'
 
 
 // (Đã xóa dòng "import products..." vì nó bị trùng với GioHang và không dùng tới)
@@ -165,6 +166,13 @@ const router = createRouter({
     component: () => import('../pages/SanPham/MuaSP/mixue.vue'),
     meta: { title: 'mixue' }
   },
+
+  {
+      path: '/thanhtoan',
+      name: 'thanhtoan',
+      component: thanhtoan, 
+      meta: { title: 'Thanh toán' } 
+    },
 // -----------------------------------------------------------------
 
   ]

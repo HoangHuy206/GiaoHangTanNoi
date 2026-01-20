@@ -53,22 +53,18 @@
                 <span>Tạm tính</span>
                 <span>{{ formatCurrency(subTotal) }}</span>
               </div>
-              <div class="summary-row">
-                <span>Phí giao hàng (Dự kiến)</span>
-                <span>{{ formatCurrency(shippingFee) }}</span>
-              </div>
               <div class="summary-divider"></div>
               <div class="summary-row total">
                 <span>Tổng cộng</span>
-                <span class="total-price">{{ formatCurrency(finalTotal) }}</span>
+                <span class="total-price">{{ formatCurrency(subTotal) }}</span>
               </div>
             </div>
           </div>
         </div>
 
         <div v-if="cartItems.length > 0" class="cart-footer">
-          <button class="checkout-btn">
-            Thanh toán - {{ formatCurrency(finalTotal) }}
+          <button class="checkout-btn" @click="goToCheckout">
+            Tiếp tục thanh toán
           </button>
         </div>
       </div>
@@ -78,6 +74,7 @@
 
 <script>
 import { ref, computed } from 'vue';
+import { useRouter } from 'vue-router'; // Import thêm Router để chuyển trang
 
 export const cartBus = {
   events: {},
@@ -94,13 +91,12 @@ export default {
   name: "GioHang",
   setup() {
     const isVisible = ref(false);
-    
-    // Mảng chứa sản phẩm
     const cartItems = ref([]);
+    const router = useRouter(); // Khai báo router
 
-    // --- CÁC HÀM TÍNH TOÁN (LOGIC TÍNH TIỀN) ---
+    // --- CÁC HÀM TÍNH TOÁN ---
 
-    // 1. Tính tổng số lượng món (để hiển thị trên tiêu đề)
+    // 1. Tính tổng số lượng món
     const totalItems = computed(() => {
       return cartItems.value.reduce((total, item) => total + item.quantity, 0);
     });
@@ -110,17 +106,9 @@ export default {
       return cartItems.value.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     });
 
-    // 3. Phí ship (Có thể logic phức tạp hơn sau này)
-    const shippingFee = ref(15000); // Mặc định 15k
-
-    // 4. Tổng thanh toán cuối cùng
-    const finalTotal = computed(() => {
-      return subTotal.value + shippingFee.value;
-    });
-
     // --- CÁC HÀM XỬ LÝ ---
 
-    // Format tiền tệ (VD: 50000 -> 50.000 ₫)
+    // Format tiền tệ
     const formatCurrency = (value) => {
       return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
     };
@@ -130,12 +118,11 @@ export default {
       cartItems.value[index].quantity++;
     };
 
-    // Giảm số lượng (Nếu còn 1 mà giảm thì xóa luôn)
+    // Giảm số lượng
     const decreaseQty = (index) => {
       if (cartItems.value[index].quantity > 1) {
         cartItems.value[index].quantity--;
       } else {
-        // Hỏi xác nhận trước khi xóa (tùy chọn)
         const confirmDelete = confirm("Bạn muốn xóa món này khỏi giỏ?");
         if (confirmDelete) {
           cartItems.value.splice(index, 1);
@@ -143,28 +130,38 @@ export default {
       }
     };
 
-    // Hàm thêm dữ liệu giả để test (User click nút test sẽ chạy hàm này)
+    // Hàm thêm dữ liệu giả để test
     const addDemoData = () => {
       cartItems.value = [
-        { id: 1, name: 'Gà rán giòn (3 miếng)', price: 85000, quantity: 1, note: 'Cay vừa' },
-        { id: 2, name: 'Burger Bò Phô Mai', price: 65000, quantity: 2, note: '' },
-        { id: 3, name: 'Khoai tây chiên', price: 30000, quantity: 1, note: '' }
+        { id: 1, name: 'Thố Cơm Thêm', price: 35000, quantity: 1, note: '' },
+        { id: 2, name: 'Cơm Thố Xá Xíu', price: 75000, quantity: 1, note: 'Suất bình thường' }
       ];
     };
 
     const openCart = () => isVisible.value = true;
     const closeCart = () => isVisible.value = false;
 
-    // Lắng nghe sự kiện thêm vào giỏ hàng từ component khác (Chuẩn bị cho tương lai)
+    // --- HÀM CHUYỂN SANG TRANG THANH TOÁN ---
+    const goToCheckout = () => {
+      // 1. Lưu giỏ hàng tạm thời vào LocalStorage để trang kia đọc được
+      localStorage.setItem('tempCart', JSON.stringify(cartItems.value));
+      
+      // 2. Đóng popup giỏ hàng
+      closeCart();
+
+      // 3. Chuyển hướng sang trang /thanhtoan
+      router.push('/thanhtoan');
+    };
+
+    // Lắng nghe sự kiện
     cartBus.on('add-to-cart', (product) => {
-      // Logic: Kiểm tra xem món đã có chưa, nếu có thì tăng số lượng, chưa thì push vào mảng
       const existingItem = cartItems.value.find(item => item.id === product.id);
       if (existingItem) {
         existingItem.quantity++;
       } else {
         cartItems.value.push({ ...product, quantity: 1 });
       }
-      openCart(); // Mở giỏ hàng ra ngay khi thêm
+      openCart();
     });
 
     cartBus.on('open-cart', openCart);
@@ -174,13 +171,12 @@ export default {
       cartItems,
       totalItems,
       subTotal,
-      shippingFee,
-      finalTotal,
       formatCurrency,
       increaseQty,
       decreaseQty,
       closeCart,
-      addDemoData
+      addDemoData,
+      goToCheckout // Trả về hàm chuyển trang
     };
   }
 };
