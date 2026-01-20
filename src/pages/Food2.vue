@@ -10,6 +10,18 @@ const isMenuOpen = ref(false)
 const activeTab = ref('nguoi-dung')
 const searchQuery = ref('')
 
+// --- LOGIC TRỢ LÝ ẢO AI ---
+const isChatOpen = ref(false)
+const showTooltip = ref(false)
+
+const toggleChat = () => {
+  isChatOpen.value = !isChatOpen.value
+  if (isChatOpen.value) {
+    showTooltip.value = false
+  }
+}
+// ---------------------------
+
 // --- DỮ LIỆU MENU ---
 const menuData = [
   {
@@ -82,19 +94,27 @@ const getFavoritesKey = () => {
 onMounted(() => {
   timer = setInterval(nextSlide, 4000)
   
-  // Tải danh sách yêu thích theo đúng tài khoản đang đăng nhập
+  // Tải danh sách yêu thích
   const favKey = getFavoritesKey()
   const savedFavorites = JSON.parse(localStorage.getItem(favKey)) || []
   
   restaurants.value.forEach(res => {
     res.isFavorite = savedFavorites.some(fav => fav.id === res.id)
   })
+
+  // --- LOGIC HIỆN TOOLTIP AI ---
+  setTimeout(() => {
+    if (!isChatOpen.value) {
+      showTooltip.value = true
+      // Tự tắt sau 5 giây
+      setTimeout(() => { showTooltip.value = false }, 5000)
+    }
+  }, 3000) // Hiện sau 3 giây vào trang
 })
 
 onUnmounted(() => { if (timer) clearInterval(timer) })
 
 const toggleFavorite = (res) => {
-  // Kiểm tra đăng nhập trước khi cho phép yêu thích
   const storedUser = localStorage.getItem('userLogin')
   if (!storedUser) {
     alert("Vui lòng đăng nhập để sử dụng tính năng yêu thích!")
@@ -119,7 +139,6 @@ const toggleFavorite = (res) => {
     favs = favs.filter(f => f.id !== res.id)
   }
   
-  // Lưu vào đúng khóa của người dùng
   localStorage.setItem(favKey, JSON.stringify(favs))
 }
 
@@ -264,11 +283,29 @@ const openCart = () => {
       </div>
       <div class="footer-bottom"><p>Theo dõi chúng tôi @2026</p></div>
     </div>
+
+    <div class="ai-assistant-container">
+      <transition name="fade">
+        <div v-if="showTooltip && !isChatOpen" class="ai-tooltip">
+          Bạn cần trợ giúp gì không? 👋
+          <span class="tooltip-arrow"></span>
+        </div>
+      </transition>
+      
+      <div class="ai-button" @click="toggleChat" :class="{ 'is-active': isChatOpen }">
+        <img src="../assets/anh.logo/anh-AI.png" alt="AI Assistant" style="width: auto; height: 57px;">
+      </div>
+
+      <transition name="slide-up">
+        <div v-if="isChatOpen" class="chat-box-popup">
+          <AI />
+        </div>
+      </transition>
+    </div>
   </div>
 </template>
 
 <style scoped>
-/* Giữ nguyên CSS cũ của bạn */
 * { padding: 0; margin: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
 .grab-container { width: 100%; overflow-x: hidden; }
 
