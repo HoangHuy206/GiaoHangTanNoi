@@ -300,4 +300,26 @@ const filteredRestaurants = computed(() => {
 .menu-sidebar li { padding: 15px 30px; cursor: pointer; list-style: none; font-weight: 600; }
 .menu-sidebar li.active { color: #00b14f; background: white; border-left: 4px solid #00b14f; }
 .menu-content { flex: 1; padding: 40px; display: flex; gap: 40px; }
+.content-grid {
+   display: flex;
+   gap: 50px; flex-wrap: wrap;
+   }
+.column-title { font-size: 16px; 
+  font-weight: bold; 
+  margin-bottom: 20px; 
+  padding-bottom: 5px; 
+  border-bottom: 2px solid #ddd; 
+  display: inline-block; }
+.menu-content ul {
+   list-style: none;
+   }
+.menu-content li {
+   margin-bottom: 12px; 
+   color: #555; 
+   font-size: 14px; 
+   cursor: pointer; }
+.menu-content li:hover {
+   color: #00B14F; 
+   text-decoration: underline; 
+  }
 </style>
