@@ -2,13 +2,24 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { RouterLink } from 'vue-router'
 
-// --- 1. IMPORT CART BUS ĐỂ GIAO TIẾP VỚI GIỎ HÀNG ---
-// Lưu ý: Kiểm tra lại đường dẫn './SanPham/Products/giohang.vue' có đúng với thư mục máy bạn không nhé
-import { cartBus } from './SanPham/Products/giohang.vue'
+// --- 1. IMPORT COMPONENT AI (Kiểm tra lại đường dẫn nếu file AI nằm chỗ khác) ---
+import AI from '../AI/AI.vue' 
 
 const isMenuOpen = ref(false)
 const activeTab = ref('nguoi-dung')
 const searchQuery = ref('')
+
+// --- LOGIC TRỢ LÝ ẢO AI ---
+const isChatOpen = ref(false)
+const showTooltip = ref(false)
+
+const toggleChat = () => {
+  isChatOpen.value = !isChatOpen.value
+  if (isChatOpen.value) {
+    showTooltip.value = false
+  }
+}
+// ---------------------------
 
 // --- DỮ LIỆU MENU ---
 const menuData = [
@@ -68,7 +79,7 @@ const restaurants = ref([
   { id: 7, name: "Mixue", type: "đồ uống", rating: 4.9, time: "30 phút", distance: "4.4 km", promo: "Giảm 15.000đ", image: new URL('../assets/anhND/mixue.jpg', import.meta.url).href, isFavorite: false },
 ])
 
-// Hàm lấy khóa lưu trữ duy nhất theo ID/Username người dùng
+// MỚI: Hàm lấy khóa lưu trữ duy nhất theo ID/Username người dùng
 const getFavoritesKey = () => {
   const storedUser = localStorage.getItem('userLogin')
   if (storedUser) {
@@ -82,19 +93,27 @@ const getFavoritesKey = () => {
 onMounted(() => {
   timer = setInterval(nextSlide, 4000)
   
-  // Tải danh sách yêu thích theo đúng tài khoản đang đăng nhập
+  // Tải danh sách yêu thích
   const favKey = getFavoritesKey()
   const savedFavorites = JSON.parse(localStorage.getItem(favKey)) || []
   
   restaurants.value.forEach(res => {
     res.isFavorite = savedFavorites.some(fav => fav.id === res.id)
   })
+
+  // --- LOGIC HIỆN TOOLTIP AI ---
+  setTimeout(() => {
+    if (!isChatOpen.value) {
+      showTooltip.value = true
+      // Tự tắt sau 5 giây
+      setTimeout(() => { showTooltip.value = false }, 5000)
+    }
+  }, 3000) // Hiện sau 3 giây vào trang
 })
 
 onUnmounted(() => { if (timer) clearInterval(timer) })
 
 const toggleFavorite = (res) => {
-  // Kiểm tra đăng nhập trước khi cho phép yêu thích
   const storedUser = localStorage.getItem('userLogin')
   if (!storedUser) {
     alert("Vui lòng đăng nhập để sử dụng tính năng yêu thích!")
@@ -119,7 +138,6 @@ const toggleFavorite = (res) => {
     favs = favs.filter(f => f.id !== res.id)
   }
   
-  // Lưu vào đúng khóa của người dùng
   localStorage.setItem(favKey, JSON.stringify(favs))
 }
 
@@ -127,12 +145,6 @@ const filteredRestaurants = computed(() => {
   if (!searchQuery.value.trim()) return restaurants.value
   return restaurants.value.filter(res => res.name.toLowerCase().includes(searchQuery.value.toLowerCase()))
 })
-
-// --- 2. HÀM MỞ GIỎ HÀNG ---
-const openCart = () => {
-  // Phát sự kiện 'open-cart' để component GioHang lắng nghe
-  cartBus.emit('open-cart')
-}
 </script>
 
 <template>
@@ -148,13 +160,11 @@ const openCart = () => {
       </div>
       <div class="nav-right">
         <span class="support-text">Trung Tâm Hỗ Trợ</span>
-        
-        <div class="cart-btn-wrapper" @click="openCart" style="cursor: pointer;">
+        <router-link to="/cart">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" color="black">
             <circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
           </svg>
-        </div>
-
+        </router-link>
         <router-link to="/thongtinnguoidung">
             <svg class="icon-action" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
         </router-link>
@@ -206,7 +216,6 @@ const openCart = () => {
       <h2 class="title-section">Ưu đãi Giao Hàng Tận Nơi tại <span class="green-text">Hà Nội</span></h2>
       <div class="restaurant-grid">
         <div v-for="res in filteredRestaurants" :key="res.id" class="restaurant-card-wrapper">
-          
           <router-link :to="'/restaurant/' + res.id" class="restaurant-card">
             <div class="image-box">
               <img :src="res.image" alt="restaurant" />
@@ -240,7 +249,7 @@ const openCart = () => {
             <h4>ĐỊA CHỈ</h4>
             <div class="map-container">
               <iframe 
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3724.0968141837515!2d105.7800937149326!3d21.028811885998315!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3135ab86ce1358d3%3A0xc3f58a36e9c91354!2zQ8O0bmcgVmnDqm4gQ-G6p3UgR2nhuqV5!5e0!3m2!1svi!2s!4v1647852395632!5m2!1svi!2s" 
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3724.3824554371583!2d105.74418387595463!3d21.01737758063065!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31345383f733e8fb%3A0xc39200389367332b!2zVHLGsOG7nW5nIENhbyDEkeG6s25nIEPDtG5nIG5naOG7hyBDYW8gSMOgIE7hu5lp!5e0!3m2!1svi!2s!4v1705680000000" 
                 width="100%" height="200" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
             </div>
           </div>
@@ -248,27 +257,45 @@ const openCart = () => {
         <div class="footer-column">
           <h4>Người dùng</h4>
           <ul>
-            <li><router-link to="/">Có gì mới?</router-link></li>
-            <li><router-link to="/">Món ngon</router-link></li>
-            <li><router-link to="/">Dịch vụ Food</router-link></li>
+            <li><router-link to="">Có gì mới?</router-link></li>
+            <li><router-link to="">Món ngon</router-link></li>
+            <li><router-link to="">Dịch vụ Food</router-link></li>
           </ul>
         </div>
         <div class="footer-column">
           <h4>Đối tác tài xế</h4>
           <ul>
-            <li><router-link to="/">Thông tin mới</router-link></li>
-            <li><router-link to="/">Di chuyển</router-link></li>
-            <li><router-link to="/">Trung tâm tài xế</router-link></li>
+            <li><router-link to="">Thông tin mới</router-link></li>
+            <li><router-link to="">Di chuyển</router-link></li>
+            <li><router-link to="">Trung tâm tài xế</router-link></li>
           </ul>
         </div>
       </div>
       <div class="footer-bottom"><p>Theo dõi chúng tôi @2026</p></div>
     </div>
+
+    <div class="ai-assistant-container">
+      <transition name="fade">
+        <div v-if="showTooltip && !isChatOpen" class="ai-tooltip">
+          Bạn cần trợ giúp gì không? 👋
+          <span class="tooltip-arrow"></span>
+        </div>
+      </transition>
+      
+      <div class="ai-button" @click="toggleChat" :class="{ 'is-active': isChatOpen }">
+        <img src="../assets/anh.logo/anh-AI.png" alt="AI Assistant" style="width: auto; height: 56px;">
+      </div>
+
+      <transition name="slide-up">
+        <div v-if="isChatOpen" class="chat-box-popup">
+          <AI />
+        </div>
+      </transition>
+    </div>
   </div>
 </template>
 
 <style scoped>
-/* Giữ nguyên CSS cũ của bạn */
 * { padding: 0; margin: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
 .grab-container { width: 100%; overflow-x: hidden; }
 
@@ -313,4 +340,96 @@ const openCart = () => {
 .menu-sidebar li { padding: 15px 30px; cursor: pointer; list-style: none; font-weight: 600; }
 .menu-sidebar li.active { color: #00b14f; background: white; border-left: 4px solid #00b14f; }
 .menu-content { flex: 1; padding: 40px; display: flex; gap: 40px; }
+
+.content-grid {
+   display: flex;
+   gap: 50px; flex-wrap: wrap;
+   }
+.column-title { font-size: 16px; 
+  font-weight: bold; 
+  margin-bottom: 20px; 
+  padding-bottom: 5px; 
+  border-bottom: 2px solid #ddd; 
+  display: inline-block; }
+.menu-content ul {
+   list-style: none;
+   }
+.menu-content li {
+   margin-bottom: 12px; 
+   color: #555; 
+   font-size: 14px; 
+   cursor: pointer; }
+.menu-content li:hover {
+   color: #00B14F; 
+   text-decoration: underline; 
+  }
+
+/* --- CSS MỚI CHO TRỢ LÝ ẢO --- */
+.ai-assistant-container {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.ai-button {
+  width: 60px;
+  height: 60px;
+  background-color: #00b14f;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  transition: all 0.3s ease;
+  border: 2px solid white;
+}
+.ai-button:hover { transform: scale(1.1); }
+.ai-button img { width: 40px; height: 40px; object-fit: contain; }
+
+.ai-tooltip {
+  background-color: white;
+  color: #333;
+  padding: 10px 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+  margin-bottom: 15px;
+  font-size: 14px;
+  position: relative;
+  white-space: nowrap;
+  font-weight: 600;
+  animation: float 2s infinite ease-in-out;
+}
+.tooltip-arrow {
+  position: absolute;
+  bottom: -6px;
+  right: 25px;
+  width: 12px;
+  height: 12px;
+  background: white;
+  transform: rotate(45deg);
+}
+
+.chat-box-popup {
+  position: absolute;
+  bottom: 80px;
+  right: 0;
+  width: 360px;
+  height: 520px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 5px 25px rgba(0,0,0,0.25);
+  overflow: hidden;
+  border: 1px solid #ddd;
+}
+
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+.fade-enter-active, .fade-leave-active { transition: opacity 0.5s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+.slide-up-enter-active, .slide-up-leave-active { transition: all 0.3s ease-out; }
+.slide-up-enter-from, .slide-up-leave-to { transform: translateY(20px); opacity: 0; }
 </style>
