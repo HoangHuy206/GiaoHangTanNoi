@@ -290,7 +290,7 @@ onUnmounted(() => {
         <router-link to="/thunhap" style="text-decoration: none;"><li><i class="ti-wallet"></i> Thu nhập</li></router-link>
         <li><i class="ti-email"></i> Hộp thư</li>
         <li><i class="ti-calendar"></i> Lịch</li>
-        <li><i class="ti-user"></i> Hồ sơ</li>
+        <router-link to="/thongtinlaixe" style="text-decoration: none;"><li><i class="ti-user"></i> Hồ sơ</li></router-link>
       </ul>
       <div class="logout-btn"><button>Đăng xuất</button></div>
     </aside>

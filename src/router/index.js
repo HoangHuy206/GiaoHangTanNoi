@@ -12,6 +12,7 @@ import dangkytaixe from '../pages/dangkytaixe.vue' // Đã đổi @ thành .. ch
 import thongtinnguoidung from '@/pages/ThongTin/thongtinnguoidung.vue'
 import Food2 from '@/pages/Food2.vue'
 import sp01 from '@/pages/SanPham/MuaSP/sp01.vue'
+import thongtintaixe from '@/pages/ThongTin/thongtintaixe.vue'
 
 // Import trang chủ tài xế & Giỏ hàng
 import trangchulaixe from '@/pages/trangchulaixe.vue'
@@ -105,13 +106,6 @@ const router = createRouter({
       component: thongtinnguoidung ,      
       meta: { title: 'Thông Tin' }
     },
-
-    {
-       path: '/Food2',      
-      name: 'Food2',
-      component: Food2 ,      
-      meta: { title: 'Trang Chủ' }
-    },
     
     {
        path: '/sp01',      
@@ -120,6 +114,12 @@ const router = createRouter({
       meta: { title: 'Bánh cuốn' }
     },
 
+   {
+       path: '/thongtinlaixe', // <--- Sửa thành chữ 'l' để khớp với link bên trang chủ
+       name: 'thongtintaixe',
+       component: thongtintaixe ,      
+       meta: { title: 'Thông tin tài xế' }
+    }
   ]
 })
 
