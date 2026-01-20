@@ -2,6 +2,10 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { RouterLink } from 'vue-router'
 
+// --- 1. IMPORT CART BUS ĐỂ GIAO TIẾP VỚI GIỎ HÀNG ---
+// Lưu ý: Đảm bảo đường dẫn này đúng với cấu trúc thư mục của bạn
+import { cartBus } from './SanPham/Products/giohang.vue'
+
 const isMenuOpen = ref(false)
 const activeTab = ref('nguoi-dung')
 const searchQuery = ref('')
@@ -123,6 +127,12 @@ const filteredRestaurants = computed(() => {
   if (!searchQuery.value.trim()) return restaurants.value
   return restaurants.value.filter(res => res.name.toLowerCase().includes(searchQuery.value.toLowerCase()))
 })
+
+// --- 2. HÀM MỞ GIỎ HÀNG ---
+const openCart = () => {
+  // Phát sự kiện 'open-cart' để component GioHang lắng nghe
+  cartBus.emit('open-cart')
+}
 </script>
 
 <template>
@@ -138,11 +148,13 @@ const filteredRestaurants = computed(() => {
       </div>
       <div class="nav-right">
         <span class="support-text">Trung Tâm Hỗ Trợ</span>
-        <router-link to="/cart">
+        
+        <div class="cart-btn-wrapper" @click="openCart" style="cursor: pointer;">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" color="black">
             <circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
           </svg>
-        </router-link>
+        </div>
+
         <router-link to="/thongtinnguoidung">
             <svg class="icon-action" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
         </router-link>
@@ -194,7 +206,8 @@ const filteredRestaurants = computed(() => {
       <h2 class="title-section">Ưu đãi Giao Hàng Tận Nơi tại <span class="green-text">Hà Nội</span></h2>
       <div class="restaurant-grid">
         <div v-for="res in filteredRestaurants" :key="res.id" class="restaurant-card-wrapper">
-          <router-link to="" class="restaurant-card">
+          
+          <router-link to="/sp01" class="restaurant-card">
             <div class="image-box">
               <img :src="res.image" alt="restaurant" />
               <span class="promo-label">Promo</span>
@@ -211,6 +224,7 @@ const filteredRestaurants = computed(() => {
               </div>
             </div>
           </router-link>
+
           <div class="favorite-icon" @click.stop.prevent="toggleFavorite(res)">
             <span v-if="res.isFavorite" style="color: #ff4757;">❤️</span>
             <span v-else>🤍</span>
@@ -235,17 +249,17 @@ const filteredRestaurants = computed(() => {
         <div class="footer-column">
           <h4>Người dùng</h4>
           <ul>
-            <li><router-link to="">Có gì mới?</router-link></li>
-            <li><router-link to="">Món ngon</router-link></li>
-            <li><router-link to="">Dịch vụ Food</router-link></li>
+            <li><router-link to="/">Có gì mới?</router-link></li>
+            <li><router-link to="/">Món ngon</router-link></li>
+            <li><router-link to="/">Dịch vụ Food</router-link></li>
           </ul>
         </div>
         <div class="footer-column">
           <h4>Đối tác tài xế</h4>
           <ul>
-            <li><router-link to="">Thông tin mới</router-link></li>
-            <li><router-link to="">Di chuyển</router-link></li>
-            <li><router-link to="">Trung tâm tài xế</router-link></li>
+            <li><router-link to="/">Thông tin mới</router-link></li>
+            <li><router-link to="/">Di chuyển</router-link></li>
+            <li><router-link to="/">Trung tâm tài xế</router-link></li>
           </ul>
         </div>
       </div>

@@ -13,10 +13,8 @@ import thongtinnguoidung from '@/pages/ThongTin/thongtinnguoidung.vue'
 import Food2 from '@/pages/Food2.vue'
 import sp01 from '@/pages/SanPham/MuaSP/sp01.vue'
 import thongtintaixe from '@/pages/ThongTin/thongtintaixe.vue'
-
-// Import trang chủ tài xế & Giỏ hàng
 import trangchulaixe from '@/pages/trangchulaixe.vue'
-import GioHang from '../pages/SanPham/Products/GioHang.vue' 
+import giohang from '@/pages/SanPham/Products/giohang.vue'
 
 
 // (Đã xóa dòng "import products..." vì nó bị trùng với GioHang và không dùng tới)
@@ -30,12 +28,14 @@ const router = createRouter({
       component: HomeView, 
       meta: { title: 'Trang chủ - Giao Hàng' } 
     },
-    {
+
+     {
       path: '/giohang',
       name: 'giohang',
-      component: GioHang, 
+      component: giohang, 
       meta: { title: 'Giỏ Hàng' } 
     },
+  
     {
       // Route phụ để redirect về home nếu lỡ nhập /home
       path: '/home',
