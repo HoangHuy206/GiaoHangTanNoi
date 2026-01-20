@@ -6,7 +6,7 @@ import OpenAI from 'openai';
 import 'dotenv/config'; 
 
 // --- KIỂM TRA KEY ---
-console.log("Kiểm tra Key:", process.env.GROQ_API_KEY ? "Đã nhận Key ✅" : "Chưa thấy Key ❌");
+console.log("Kiểm tra API", process.env.GROQ_API_KEY ? "Đã nhận API ✅" : "Chưa thấy API ❌");
 
 const groqClient = new OpenAI({
     apiKey: process.env.GROQ_API_KEY,
@@ -40,9 +40,10 @@ app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
 
 // ==================================================================
-// PHẦN 1: CÁC API HỆ THỐNG (Giữ nguyên)
+// PHẦN 1: CÁC API HỆ THỐNG (Auth, User, Favorite)
 // ==================================================================
 
+// 1. Đăng ký
 app.post('/register', (req, res) => {
   const { fullname, username, password } = req.body;
   if (!username || !password || !fullname) return res.status(400).json({ message: "Thiếu thông tin" });
@@ -60,6 +61,7 @@ app.post('/register', (req, res) => {
   });
 });
 
+// 2. Đăng nhập
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
   const sql = "SELECT account_id, username, fullname, role, avatar_url FROM accounts WHERE username = ? AND password = ?";
@@ -75,6 +77,7 @@ app.post('/login', (req, res) => {
   });
 });
 
+// 3. Cập nhật Avatar
 app.post('/api/update-avatar', async (req, res) => {
   try {
     const { account_id, avatar_data } = req.body;
@@ -82,6 +85,68 @@ app.post('/api/update-avatar', async (req, res) => {
     return res.json({ status: 'success', message: 'Đã lưu ảnh' });
   } catch (err) { return res.status(500).json({ status: 'error', message: 'Lỗi server' }); }
 });
+
+// ------------------------------------------------------------------
+// [MỚI] TÍNH NĂNG YÊU THÍCH / THẢ TIM (Đã thêm vào đây)
+// ------------------------------------------------------------------
+
+// API 1: Bấm Tim (Tự động Thêm hoặc Xóa)
+app.post('/api/like', (req, res) => {
+    const { maNguoiDung, maQuan } = req.body;
+
+    // Kiểm tra xem đã like chưa
+    const sqlCheck = "SELECT * FROM YeuThichMonAn WHERE MaNguoiDung = ? AND MaQuan = ?";
+    
+    pool.query(sqlCheck, [maNguoiDung, maQuan], (err, result) => {
+        if (err) return res.status(500).json(err);
+
+        if (result.length > 0) {
+            // Nếu có rồi -> XÓA (Bỏ like)
+            const sqlDelete = "DELETE FROM YeuThichMonAn WHERE MaNguoiDung = ? AND MaQuan = ?";
+            pool.query(sqlDelete, [maNguoiDung, maQuan], (err, data) => {
+                if (err) return res.status(500).json(err);
+                return res.json({ message: "Đã bỏ yêu thích", status: false });
+            });
+        } else {
+            // Nếu chưa có -> THÊM MỚI (Like)
+            const sqlInsert = "INSERT INTO YeuThichMonAn (MaNguoiDung, MaQuan) VALUES (?, ?)";
+            pool.query(sqlInsert, [maNguoiDung, maQuan], (err, data) => {
+                if (err) return res.status(500).json(err);
+                return res.json({ message: "Đã thêm yêu thích", status: true });
+            });
+        }
+    });
+});
+
+// API 2: Lấy danh sách yêu thích của User
+app.get('/api/like/:userId', (req, res) => {
+    const userId = req.params.userId;
+
+    // ✅ Đã sửa thành bảng QuanAn
+    const sql = `
+        SELECT Q.* FROM QuanAn Q 
+        JOIN YeuThichMonAn YT ON Q.MaQuan = YT.MaQuan 
+        WHERE YT.MaNguoiDung = ?
+        ORDER BY YT.NgayThem DESC
+    `;
+
+    pool.query(sql, [userId], (err, data) => {
+        if (err) return res.status(500).json(err);
+        return res.json(data);
+    });
+});
+
+// API 3: Kiểm tra trạng thái 1 món (để tô đỏ tim)
+app.get('/api/check-like', (req, res) => {
+    const { userId, foodId } = req.query;
+    
+    const sql = "SELECT * FROM YeuThichMonAn WHERE MaNguoiDung = ? AND MaQuan = ?";
+    pool.query(sql, [userId, foodId], (err, data) => {
+        if (err) return res.status(500).json(err);
+        return res.json({ isLiked: data.length > 0 });
+    });
+});
+
 
 // ==================================================================
 // PHẦN 2: LOGIC AI THÔNG MINH (CHÀO TÊN + TÌM ĐƠN CỦA TÔI)
@@ -105,7 +170,7 @@ async function traCuuDonHangDB(maDon) {
     } catch (e) { return JSON.stringify({ error: e.message }); }
 }
 
-// Tool 2: [MỚI] Lấy danh sách đơn của USERNAME đang chat
+// Tool 2: Lấy danh sách đơn của USERNAME đang chat
 async function layDonCuaUser(username) {
     console.log(`🔍 Đang tìm đơn hàng của user: ${username}`);
     try {
@@ -116,7 +181,7 @@ async function layDonCuaUser(username) {
             return JSON.stringify({ 
                 has_order: true, 
                 count: rows.length, 
-                orders: rows // Trả về danh sách các đơn
+                orders: rows 
             });
         } else {
             return JSON.stringify({ has_order: false, message: "Người dùng này chưa có đơn hàng nào." });
@@ -156,21 +221,18 @@ const tools = [
 
 // API Chat endpoint
 app.post('/api/chat', async (req, res) => {
-    // Nhận thêm biến currentUser từ Frontend gửi lên
     const { message, history, currentUser } = req.body;
 
     try {
-        // --- TẠO CÂU CHÀO & NGỮ CẢNH (SYSTEM PROMPT) ---
+        // --- SYSTEM PROMPT ---
         let systemContent = "Bạn là trợ lý ảo Giao Hàng. ";
         
         if (currentUser && currentUser.fullname) {
-            // Nếu đã đăng nhập -> AI biết tên thật và username
             systemContent += `Bạn đang chat với khách hàng tên là "${currentUser.fullname}" (username: ${currentUser.username}). 
-            - Hãy chào họ bằng tên thật thân thiện (Ví dụ: Chào ${currentUser.fullname}).
-            - Nếu họ hỏi "đơn hàng của tôi", "tôi có đơn nào không", hãy dùng tool 'lay_ds_don_cua_toi' với username là '${currentUser.username}'.
+            - Hãy chào họ bằng tên thật thân thiện.
+            - Nếu họ hỏi "đơn hàng của tôi", hãy dùng tool 'lay_ds_don_cua_toi' với username là '${currentUser.username}'.
             - Nếu kết quả trả về là không có đơn, hãy báo: "Hiện tại ${currentUser.fullname} chưa có đơn hàng nào".`;
         } else {
-            // Nếu chưa đăng nhập
             systemContent += "Khách hàng chưa đăng nhập. Nếu họ hỏi về đơn cá nhân, hãy nhắc họ đăng nhập để kiểm tra.";
         }
 
@@ -202,11 +264,9 @@ app.post('/api/chat', async (req, res) => {
                 toolResult = await layDonCuaUser(args.username);
             }
 
-            // Gửi kết quả DB lại cho AI
             messages.push(responseMessage);
             messages.push({ role: "tool", tool_call_id: toolCall.id, content: toolResult });
 
-            // Gọi Groq lần 2 để trả lời khách
             const secondResponse = await groqClient.chat.completions.create({
                 model: "llama-3.3-70b-versatile",
                 messages: messages

@@ -1,8 +1,9 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { RouterLink } from 'vue-router'
+import axios from 'axios' // Đừng quên: npm install axios
 
-// --- 1. IMPORT COMPONENT AI (Kiểm tra lại đường dẫn nếu file AI nằm chỗ khác) ---
+// --- 1. IMPORT COMPONENT AI ---
 import AI from '../AI/AI.vue' 
 
 const isMenuOpen = ref(false)
@@ -19,7 +20,6 @@ const toggleChat = () => {
     showTooltip.value = false
   }
 }
-// ---------------------------
 
 // --- DỮ LIỆU MENU ---
 const menuData = [
@@ -68,7 +68,8 @@ const prevSlide = () => { currentIndex.value = (currentIndex.value - 1 + images.
 
 let timer = null
 
-// --- DANH SÁCH NHÀ HÀNG ---
+// --- DANH SÁCH NHÀ HÀNG (Dữ liệu tĩnh hiển thị, trạng thái tim sẽ lấy từ DB) ---
+// Lưu ý: ID ở đây phải khớp với MaQuan trong Database bạn vừa Insert
 const restaurants = ref([
   { id: 1, name: "Cơm Gà 68 - Cơm Gà, Cơm Sườn", type: "Cơm", rating: 4.9, time: "30 phút", distance: "4.4 km", promo: "Giảm 15.000đ", image: new URL('../assets/anhND/comngon.jpg', import.meta.url).href, isFavorite: false },
   { id: 2, name: "Lotteria - Vincom Smart City", type: "đồ uống", rating: 3.8, time: "25 phút", distance: "2.8 km", promo: "Tặng Menu", image: new URL('../assets/anhND/lotte.jpg', import.meta.url).href, isFavorite: false },
@@ -79,66 +80,75 @@ const restaurants = ref([
   { id: 7, name: "Mixue", type: "đồ uống", rating: 4.9, time: "30 phút", distance: "4.4 km", promo: "Giảm 15.000đ", image: new URL('../assets/anhND/mixue.jpg', import.meta.url).href, isFavorite: false },
 ])
 
-// MỚI: Hàm lấy khóa lưu trữ duy nhất theo ID/Username người dùng
-const getFavoritesKey = () => {
-  const storedUser = localStorage.getItem('userLogin')
-  if (storedUser) {
-    const data = JSON.parse(storedUser)
-    const identifier = data.id || data.userName || data.HoTen || 'guest'
-    return `favoriteShops_${identifier}`
-  }
-  return 'favoriteShops_guest'
+// --- HÀM LẤY USER TỪ LOCALSTORAGE ---
+const getCurrentUser = () => {
+    const userStr = localStorage.getItem('userLogin'); // Hoặc 'user_info' tùy lúc Login bạn lưu là gì
+    if (userStr) return JSON.parse(userStr);
+    return null;
 }
 
-onMounted(() => {
+onMounted(async () => {
   timer = setInterval(nextSlide, 4000)
   
-  // Tải danh sách yêu thích
-  const favKey = getFavoritesKey()
-  const savedFavorites = JSON.parse(localStorage.getItem(favKey)) || []
-  
-  restaurants.value.forEach(res => {
-    res.isFavorite = savedFavorites.some(fav => fav.id === res.id)
-  })
+  // --- LOGIC MỚI: ĐỒNG BỘ TRÁI TIM TỪ DATABASE ---
+  const currentUser = getCurrentUser();
+  if (currentUser && currentUser.account_id) {
+      try {
+          // Gọi API lấy danh sách các quán User này đã like
+          const res = await axios.get(`http://localhost:3000/api/like/${currentUser.account_id}`);
+          const likedList = res.data; // Mảng các quán đã like từ DB
+
+          // Duyệt qua danh sách hiển thị, nếu ID trùng với DB thì tô đỏ tim
+          restaurants.value.forEach(r => {
+              // Kiểm tra xem quán này có trong danh sách likedList không
+              const isLiked = likedList.some(dbItem => dbItem.MaQuan === r.id);
+              if (isLiked) r.isFavorite = true;
+          });
+      } catch (error) {
+          console.error("Lỗi tải danh sách yêu thích:", error);
+      }
+  }
 
   // --- LOGIC HIỆN TOOLTIP AI ---
   setTimeout(() => {
     if (!isChatOpen.value) {
       showTooltip.value = true
-      // Tự tắt sau 5 giây
       setTimeout(() => { showTooltip.value = false }, 5000)
     }
-  }, 3000) // Hiện sau 3 giây vào trang
+  }, 3000)
 })
 
 onUnmounted(() => { if (timer) clearInterval(timer) })
 
-const toggleFavorite = (res) => {
-  const storedUser = localStorage.getItem('userLogin')
-  if (!storedUser) {
-    alert("Vui lòng đăng nhập để sử dụng tính năng yêu thích!")
-    return
-  }
-
-  res.isFavorite = !res.isFavorite
-  const favKey = getFavoritesKey()
-  let favs = JSON.parse(localStorage.getItem(favKey)) || []
-
-  if (res.isFavorite) {
-    if (!favs.find(f => f.id === res.id)) {
-      favs.push({ 
-        id: res.id, 
-        name: res.name, 
-        image: res.image, 
-        address: res.distance, 
-        discount: res.promo 
-      })
-    }
-  } else {
-    favs = favs.filter(f => f.id !== res.id)
-  }
+// --- LOGIC MỚI: BẤM TIM GỌI API ---
+const toggleFavorite = async (res) => {
+  const currentUser = getCurrentUser();
   
-  localStorage.setItem(favKey, JSON.stringify(favs))
+  if (!currentUser) {
+    alert("Vui lòng đăng nhập để sử dụng tính năng yêu thích!");
+    return;
+  }
+
+  // UX: Đổi màu ngay lập tức cho mượt
+  const oldState = res.isFavorite;
+  res.isFavorite = !res.isFavorite;
+
+  try {
+      // Gọi API Backend
+      const response = await axios.post('http://localhost:3000/api/like', {
+          maNguoiDung: currentUser.account_id, // Lấy ID từ user đã đăng nhập
+          maQuan: res.id
+      });
+
+      // (Tùy chọn) Hiện thông báo
+      // if (response.data.status) alert("Đã thêm vào yêu thích ❤️");
+      // else alert("Đã bỏ yêu thích 💔");
+
+  } catch (error) {
+      console.error("Lỗi thả tim:", error);
+      res.isFavorite = oldState; // Hoàn tác nếu lỗi
+      alert("Lỗi kết nối server!");
+  }
 }
 
 const filteredRestaurants = computed(() => {
@@ -364,7 +374,7 @@ const filteredRestaurants = computed(() => {
    text-decoration: underline; 
   }
 
-/* --- CSS MỚI CHO TRỢ LÝ ẢO --- */
+/* --- CSS TRỢ LÝ ẢO --- */
 .ai-assistant-container {
   position: fixed;
   bottom: 30px;

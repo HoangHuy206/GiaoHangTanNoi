@@ -65,15 +65,17 @@
             </div>
           </div>
 
-          <div v-if="favoriteShops.length > 0" class="shop-grid">
-            <div class="shop-card" v-for="shop in favoriteShops" :key="shop.id">
+          <div v-if="isLoading" class="loading-text">Đang tải dữ liệu...</div>
+
+          <div v-else-if="favoriteShops.length > 0" class="shop-grid">
+            <div class="shop-card" v-for="shop in favoriteShops" :key="shop.MaQuan">
               <div class="image-box">
-                <img :src="shop.image" :alt="shop.name">
-                <button class="btn-remove" @click="removeFavorite(shop.id)">✕</button>
+                <img :src="shop.HinhAnh" :alt="shop.TenQuan" @error="handleImageError">
+                <button class="btn-remove" @click="removeFavorite(shop.MaQuan)">✕</button>
               </div>
               <div class="shop-content">
-                <h4>{{ shop.name }}</h4>
-                <p>{{ shop.address }}</p>
+                <h4>{{ shop.TenQuan }}</h4>
+                <p>⭐ {{ shop.DanhGia || '4.5' }} • {{ shop.DiaChi }}</p>
               </div>
             </div>
           </div>
@@ -107,13 +109,12 @@ const user = reactive({
 });
 
 const favoriteShops = ref([]);
+const isLoading = ref(false);
 const fileInput = ref(null);
 
-// --- HÀM XỬ LÝ SỰ KIỆN CHIA SẺ (MỚI THÊM) ---
+// --- 1. HÀM CHIA SẺ ---
 const handleShare = async () => {
-  const currentUrl = window.location.href; // Lấy đường dẫn hiện tại
-
-  // 1. Dùng Native Share của trình duyệt (trên điện thoại)
+  const currentUrl = window.location.href;
   if (navigator.share) {
     try {
       await navigator.share({
@@ -121,52 +122,52 @@ const handleShare = async () => {
         text: 'Xem hồ sơ người dùng trên Giao Hàng Tận Nơi:',
         url: currentUrl,
       });
-    } catch (err) {
-      console.log('Đã hủy chia sẻ', err);
-    }
-  } 
-  // 2. Fallback: Copy link vào clipboard (trên máy tính)
-  else {
+    } catch (err) { console.log('Đã hủy chia sẻ', err); }
+  } else {
     try {
       await navigator.clipboard.writeText(currentUrl);
-      alert('✅ Đã sao chép liên kết hồ sơ vào bộ nhớ tạm!\nBạn có thể dán (Paste) để chia sẻ.');
-    } catch (err) {
-      alert('Link hồ sơ: ' + currentUrl);
-    }
+      alert('✅ Đã sao chép liên kết hồ sơ!');
+    } catch (err) { alert('Link hồ sơ: ' + currentUrl); }
   }
 };
-// ---------------------------------------------
 
-const getFavoritesKey = () => {
+// --- 2. HÀM LOAD DỮ LIỆU (TỪ DB & LOCALSTORAGE) ---
+const loadData = async () => {
+  // Lấy User Info từ LocalStorage (lúc đăng nhập đã lưu)
   const storedUser = localStorage.getItem('userLogin');
+  
   if (storedUser) {
     const data = JSON.parse(storedUser);
-    return `favoriteShops_${data.username || data.fullname || 'guest'}`;
-  }
-  return 'favoriteShops_guest';
-};
-
-const loadData = () => {
-  const storedUser = localStorage.getItem('userLogin');
-  if (storedUser) {
-    const data = JSON.parse(storedUser);
-    console.log("Dữ liệu nhận được:", data); 
     
+    // Gán dữ liệu hiển thị
     user.id = data.account_id;
     user.name = data.fullname || 'Người dùng'; 
     user.avatar = data.avatar_url || '';
-    user.likes = data.likes || 0;
+    user.likes = data.likes || 0; // Nếu DB chưa có thì để 0
     user.followers = data.followers || 0;
     user.following = data.following || 0;
+
+    // QUAN TRỌNG: Gọi API lấy danh sách yêu thích từ DB
+    if (user.id) {
+        isLoading.value = true;
+        try {
+            const res = await axios.get(`http://localhost:3000/api/like/${user.id}`);
+            favoriteShops.value = res.data; // Dữ liệu từ SQL trả về
+        } catch (error) {
+            console.error("Lỗi lấy danh sách yêu thích:", error);
+        } finally {
+            isLoading.value = false;
+        }
+    }
+  } else {
+    // Chưa đăng nhập
+    router.push('/login');
   }
-  
-  const favKey = getFavoritesKey();
-  const storedFavs = localStorage.getItem(favKey);
-  if (storedFavs) favoriteShops.value = JSON.parse(storedFavs);
 };
 
 onMounted(loadData);
 
+// --- 3. CÁC HÀM XỬ LÝ KHÁC ---
 const handleLogout = () => {
   if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
     localStorage.removeItem('userLogin');
@@ -184,12 +185,14 @@ const onFileChange = async (e) => {
       const base64Image = event.target.result;
       user.avatar = base64Image;
 
+      // Cập nhật Avatar lên Server
       try {
         await axios.post('http://localhost:3000/api/update-avatar', {
           account_id: user.id,
           avatar_data: base64Image
         });
 
+        // Cập nhật lại LocalStorage để lần sau vào không bị mất ảnh
         const userData = JSON.parse(localStorage.getItem('userLogin')) || {};
         userData.avatar_url = base64Image;
         localStorage.setItem('userLogin', JSON.stringify(userData));
@@ -197,16 +200,30 @@ const onFileChange = async (e) => {
         console.log("Đã cập nhật ảnh đại diện thành công!");
       } catch (error) {
         console.error("Lỗi khi gửi ảnh lên server:", error);
+        alert("Lỗi cập nhật ảnh!");
       }
     };
     reader.readAsDataURL(file);
   }
 };
 
-const removeFavorite = (id) => {
-  const favKey = getFavoritesKey();
-  favoriteShops.value = favoriteShops.value.filter(s => s.id !== id);
-  localStorage.setItem(favKey, JSON.stringify(favoriteShops.value));
+// Xóa yêu thích (Gọi API)
+const removeFavorite = async (maQuan) => {
+  if (!confirm("Bạn muốn bỏ quán này khỏi danh sách yêu thích?")) return;
+
+  try {
+      // Gọi API xóa trong DB
+      await axios.post('http://localhost:3000/api/like', {
+          maNguoiDung: user.id,
+          maQuan: maQuan
+      });
+
+      // Cập nhật giao diện (xóa dòng đó đi)
+      favoriteShops.value = favoriteShops.value.filter(item => item.MaQuan !== maQuan);
+  } catch (error) {
+      console.error(error);
+      alert("Lỗi kết nối server!");
+  }
 };
 
 const handleImageError = (e) => { e.target.src = defaultAvatar; };
@@ -250,4 +267,5 @@ const handleImageError = (e) => { e.target.src = defaultAvatar; };
 .shop-content p { margin: 0; font-size: 13px; color: #999; }
 .empty-state { padding: 80px 0; text-align: center; color: #aaa; }
 .home-link { display: inline-block; margin-top: 15px; color: #00B14F; text-decoration: none; font-weight: 700; border: 2px solid #00B14F; padding: 8px 25px; border-radius: 25px; }
+.loading-text { text-align: center; color: #999; padding: 20px; }
 </style>
