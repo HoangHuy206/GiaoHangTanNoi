@@ -98,7 +98,7 @@ watch(isMenuOpen, (open) => {
     </div>
 
     <div class="background-img">
-      <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070&auto=format&fit=crop" alt="Background">
+      <img src="../assets/anh.logo/z7435869738899_000_e53e72bd89e38a070e1aa4f3a917f074.jpg" alt="Background">
     </div>
 
     <div class="content-intro">
@@ -372,7 +372,7 @@ header {
 
 .background-img img {
   width: 100%;
-  height: 400px;
+  height: 600px;
   object-fit: cover;
   display: block;
 }
