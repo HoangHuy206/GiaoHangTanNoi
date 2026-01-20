@@ -206,8 +206,12 @@ const openCart = () => {
       <h2 class="title-section">Ưu đãi Giao Hàng Tận Nơi tại <span class="green-text">Hà Nội</span></h2>
       <div class="restaurant-grid">
         <div v-for="res in filteredRestaurants" :key="res.id" class="restaurant-card-wrapper">
+<<<<<<< HEAD
           
           <router-link to="/sp01" class="restaurant-card">
+=======
+          <router-link :to="'/restaurant/' + res.id" class="restaurant-card">
+>>>>>>> ed367e7938d99dade3a2995ca0c9bd39d1aa35cf
             <div class="image-box">
               <img :src="res.image" alt="restaurant" />
               <span class="promo-label">Promo</span>
