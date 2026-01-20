@@ -1,10 +1,14 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { RouterLink } from 'vue-router'
-import axios from 'axios' // Đừng quên: npm install axios
+import axios from 'axios' 
 
 // --- 1. IMPORT COMPONENT AI ---
 import AI from '../AI/AI.vue' 
+
+// --- 2. IMPORT EVENT BUS TỪ GIỎ HÀNG (Mới thêm) ---
+// Đảm bảo đường dẫn này đúng với cấu trúc thư mục của bạn
+import { cartBus } from '@/pages/Sanpham/Products/GioHang.vue' 
 
 const isMenuOpen = ref(false)
 const activeTab = ref('nguoi-dung')
@@ -19,6 +23,12 @@ const toggleChat = () => {
   if (isChatOpen.value) {
     showTooltip.value = false
   }
+}
+
+// --- LOGIC MỞ GIỎ HÀNG (Mới thêm) ---
+const openCartPopup = () => {
+  console.log("Đã bấm mở giỏ hàng");
+  cartBus.emit('open-cart'); // Gửi tín hiệu sang App.vue -> GioHang.vue
 }
 
 // --- DỮ LIỆU MENU ---
@@ -68,8 +78,7 @@ const prevSlide = () => { currentIndex.value = (currentIndex.value - 1 + images.
 
 let timer = null
 
-// --- DANH SÁCH NHÀ HÀNG (Dữ liệu tĩnh hiển thị, trạng thái tim sẽ lấy từ DB) ---
-// Lưu ý: ID ở đây phải khớp với MaQuan trong Database bạn vừa Insert
+// --- DANH SÁCH NHÀ HÀNG ---
 const restaurants = ref([
   { id: 1, name: "Cơm Gà 68 - Cơm Gà, Cơm Sườn", type: "Cơm", rating: 4.9, time: "30 phút", distance: "4.4 km", promo: "Giảm 15.000đ", image: new URL('../assets/anhND/comngon.jpg', import.meta.url).href, isFavorite: false },
   { id: 2, name: "Lotteria - Vincom Smart City", type: "đồ uống", rating: 3.8, time: "25 phút", distance: "2.8 km", promo: "Tặng Menu", image: new URL('../assets/anhND/lotte.jpg', import.meta.url).href, isFavorite: false },
@@ -82,7 +91,7 @@ const restaurants = ref([
 
 // --- HÀM LẤY USER TỪ LOCALSTORAGE ---
 const getCurrentUser = () => {
-    const userStr = localStorage.getItem('userLogin'); // Hoặc 'user_info' tùy lúc Login bạn lưu là gì
+    const userStr = localStorage.getItem('userLogin'); 
     if (userStr) return JSON.parse(userStr);
     return null;
 }
@@ -94,13 +103,10 @@ onMounted(async () => {
   const currentUser = getCurrentUser();
   if (currentUser && currentUser.account_id) {
       try {
-          // Gọi API lấy danh sách các quán User này đã like
           const res = await axios.get(`http://localhost:3000/api/like/${currentUser.account_id}`);
-          const likedList = res.data; // Mảng các quán đã like từ DB
+          const likedList = res.data; 
 
-          // Duyệt qua danh sách hiển thị, nếu ID trùng với DB thì tô đỏ tim
           restaurants.value.forEach(r => {
-              // Kiểm tra xem quán này có trong danh sách likedList không
               const isLiked = likedList.some(dbItem => dbItem.MaQuan === r.id);
               if (isLiked) r.isFavorite = true;
           });
@@ -129,24 +135,17 @@ const toggleFavorite = async (res) => {
     return;
   }
 
-  // UX: Đổi màu ngay lập tức cho mượt
   const oldState = res.isFavorite;
   res.isFavorite = !res.isFavorite;
 
   try {
-      // Gọi API Backend
       const response = await axios.post('http://localhost:3000/api/like', {
-          maNguoiDung: currentUser.account_id, // Lấy ID từ user đã đăng nhập
+          maNguoiDung: currentUser.account_id,
           maQuan: res.id
       });
-
-      // (Tùy chọn) Hiện thông báo
-      // if (response.data.status) alert("Đã thêm vào yêu thích ❤️");
-      // else alert("Đã bỏ yêu thích 💔");
-
   } catch (error) {
       console.error("Lỗi thả tim:", error);
-      res.isFavorite = oldState; // Hoàn tác nếu lỗi
+      res.isFavorite = oldState; 
       alert("Lỗi kết nối server!");
   }
 }
@@ -170,11 +169,15 @@ const filteredRestaurants = computed(() => {
       </div>
       <div class="nav-right">
         <span class="support-text">Trung Tâm Hỗ Trợ</span>
-        <router-link to="/cart">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" color="black">
-            <circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+        
+        <a href="#" @click.prevent="openCartPopup" class="cart-icon-link">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: black;">
+            <circle cx="9" cy="21" r="1"></circle>
+            <circle cx="20" cy="21" r="1"></circle>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
           </svg>
-        </router-link>
+        </a>
+
         <router-link to="/thongtinnguoidung">
             <svg class="icon-action" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
         </router-link>
