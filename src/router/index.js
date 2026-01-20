@@ -11,7 +11,7 @@ import Food from '../pages/Food.vue'
 import dangkytaixe from '../pages/dangkytaixe.vue' // Đã đổi @ thành .. cho đồng bộ
 import thongtinnguoidung from '@/pages/ThongTin/thongtinnguoidung.vue'
 import Food2 from '@/pages/Food2.vue'
-import sp01 from '@/pages/SanPham/MuaSP/sp01.vue'
+import toco from '@/pages/SanPham/MuaSP/toco.vue'
 import thongtintaixe from '@/pages/ThongTin/thongtintaixe.vue'
 
 // Import trang chủ tài xế & Giỏ hàng
@@ -108,9 +108,9 @@ const router = createRouter({
     },
     
     {
-       path: '/sp01',      
-      name: 'sp01',
-      component: sp01 ,      
+       path: '/toco',      
+      name: 'toco',
+      component: toco,      
       meta: { title: 'Bánh cuốn' }
     },
 
@@ -119,8 +119,56 @@ const router = createRouter({
        name: 'thongtintaixe',
        component: thongtintaixe ,      
        meta: { title: 'Thông tin tài xế' }
-    }
+    },
+
+    // ----------------------chuyển trang chi tiết sản phẩm
+
+    {
+    path: '/restaurant/1',
+    name: 'comga',
+    component: () => import('../pages/SanPham/MuaSP/comga.vue'),
+    meta: { title: 'Cơm Gà 68' }
+  },
+  {
+    path: '/restaurant/2',
+    name: 'Lotteria',
+    component: () => import('../pages/SanPham/MuaSP/lotte.vue'),
+    meta: { title: 'Lotteria' }
+  },
+    {
+    path: '/restaurant/3',
+    name: 'comgabinhdan',
+    component: () => import('../pages/SanPham/MuaSP/combinhdan.vue'),
+    meta: { title: 'Cơm bình dân' }
+  },
+  {
+    path: '/restaurant/4',
+    name: 'gaham',
+    component: () => import('../pages/SanPham/MuaSP/gaham.vue'),
+    meta: { title: 'comgabinhdan' }
+  },
+  {
+    path: '/restaurant/5',
+    name: 'TocoToco',
+    component: () => import('../pages/SanPham/MuaSP/toco.vue'),
+    meta: { title: 'TocoToco' }
+  },
+    {
+    path: '/restaurant/6',
+    name: 'buncham',
+    component: () => import('../pages/SanPham/MuaSP/buncham.vue'),
+    meta: { title: 'buncham' }
+  },
+      {
+    path: '/restaurant/7',
+    name: 'mixue',
+    component: () => import('../pages/SanPham/MuaSP/mixue.vue'),
+    meta: { title: 'mixue' }
+  },
+// -----------------------------------------------------------------
+
   ]
+  
 })
 
 // Tự động đổi tiêu đề tab trình duyệt

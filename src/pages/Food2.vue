@@ -194,7 +194,7 @@ const filteredRestaurants = computed(() => {
       <h2 class="title-section">Ưu đãi Giao Hàng Tận Nơi tại <span class="green-text">Hà Nội</span></h2>
       <div class="restaurant-grid">
         <div v-for="res in filteredRestaurants" :key="res.id" class="restaurant-card-wrapper">
-          <router-link to="" class="restaurant-card">
+          <router-link :to="'/restaurant/' + res.id" class="restaurant-card">
             <div class="image-box">
               <img :src="res.image" alt="restaurant" />
               <span class="promo-label">Promo</span>
