@@ -18,10 +18,10 @@ const activeCategory = ref("Dành cho bạn")
 
 // Danh sách món ăn
 const products = ref([
-  { id: 1, name: "Cơm rang dưa bò ", price: "65.000₫", image: new URL('../../../assets/anhND/comrangduabo.webp', import.meta.url) },
-  { id: 2, name: "Cơm Rang Đùi Gà", price: "159.000₫", image: new URL('../../../assets/anhND/comrangduiga.webp', import.meta.url) },
-  { id: 3, name: "Cơm Rang Hải Sản", price: "79.000₫", image: new URL('../../../assets/anhND/comranghaisan.webp', import.meta.url) },
-  { id: 4, name: "Cơm Rang Thập Cẩm", price: "120.000₫", image: new URL('../../../assets/anhND/comrangthapcam.webp', import.meta.url) },
+  { id: 1, name: "Cơm rang dưa bò ", price: "65000", image: new URL('../../../assets/anhND/comrangduabo.webp', import.meta.url) },
+  { id: 2, name: "Cơm Rang Đùi Gà", price: "159000", image: new URL('../../../assets/anhND/comrangduiga.webp', import.meta.url) },
+  { id: 3, name: "Cơm Rang Hải Sản", price: "79000", image: new URL('../../../assets/anhND/comranghaisan.webp', import.meta.url) },
+  { id: 4, name: "Cơm Rang Thập Cẩm", price: "120000", image: new URL('../../../assets/anhND/comrangthapcam.webp', import.meta.url) },
 ])
 
 // --- 2. IMPORT EVENT BUS TỪ GIỎ HÀNG (Mới thêm) ---
@@ -32,6 +32,24 @@ import { cartBus } from '@/pages/Sanpham/Products/GioHang.vue'
 const openCartPopup = () => {
   console.log("Đã bấm mở giỏ hàng");
   cartBus.emit('open-cart'); // Gửi tín hiệu sang App.vue -> GioHang.vue
+}
+
+// --- LOGIC THÊM VÀO GIỎ HÀNG ---
+const addToCart = (product) => {
+  console.log("Đã thêm vào giỏ:", product.name);
+  
+  // Gửi thông tin sản phẩm sang component Giỏ Hàng
+  // Bạn nên truyền object chứa đầy đủ thông tin cần thiết
+  cartBus.emit('add-to-cart', {
+    id: product.id,
+    name: product.name,
+    price: product.price,
+    image: product.image,
+    quantity: 1 // Mặc định mỗi lần nhấn là thêm 1
+  });
+  
+  // Tùy chọn: Hiển thị thông báo nhỏ cho người dùng
+  // alert(`Đã thêm ${product.name} vào giỏ hàng!`);
 }
 </script>
 
@@ -104,8 +122,9 @@ const openCartPopup = () => {
           <div class="card-content">
             <h3 class="prod-name">{{ item.name }}</h3>
             <p class="prod-desc">Món ngon bán chạy nhất tuần qua...</p> <div class="card-footer">
-              <span class="price">{{ item.price }}</span>
-              <button class="add-btn">+</button>
+              <span class="price">{{ item.price.toLocaleString('vi-VN') }}₫</span>
+              
+              <button class="add-btn" @click="addToCart(item)">+</button>
             </div>
           </div>
         </div>
