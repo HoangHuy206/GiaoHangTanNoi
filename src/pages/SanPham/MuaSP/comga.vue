@@ -18,10 +18,10 @@ const activeCategory = ref("Dành cho bạn")
 
 // Danh sách món ăn
 const products = ref([
-  { id: 1, name: "Cơm rang dưa bò ", price: "65.000₫", image: new URL('../../../assets/anhND/comrangduabo.webp', import.meta.url) },
-  { id: 2, name: "Cơm Rang Đùi Gà", price: "159.000₫", image: new URL('../../../assets/anhND/comrangduiga.webp', import.meta.url) },
-  { id: 3, name: "Cơm Rang Hải Sản", price: "79.000₫", image: new URL('../../../assets/anhND/comranghaisan.webp', import.meta.url) },
-  { id: 4, name: "Cơm Rang Thập Cẩm", price: "120.000₫", image: new URL('../../../assets/anhND/comrangthapcam.webp', import.meta.url) },
+  { id: 1, name: "Cơm rang dưa bò ", price: "65000", image: new URL('../../../assets/anhND/comrangduabo.webp', import.meta.url) },
+  { id: 2, name: "Cơm Rang Đùi Gà", price: "159000", image: new URL('../../../assets/anhND/comrangduiga.webp', import.meta.url) },
+  { id: 3, name: "Cơm Rang Hải Sản", price: "79000", image: new URL('../../../assets/anhND/comranghaisan.webp', import.meta.url) },
+  { id: 4, name: "Cơm Rang Thập Cẩm", price: "120000", image: new URL('../../../assets/anhND/comrangthapcam.webp', import.meta.url) },
 ])
 
 // --- 2. IMPORT EVENT BUS TỪ GIỎ HÀNG (Mới thêm) ---
@@ -32,6 +32,24 @@ import { cartBus } from '@/pages/Sanpham/Products/GioHang.vue'
 const openCartPopup = () => {
   console.log("Đã bấm mở giỏ hàng");
   cartBus.emit('open-cart'); // Gửi tín hiệu sang App.vue -> GioHang.vue
+}
+
+// --- LOGIC THÊM VÀO GIỎ HÀNG ---
+const addToCart = (product) => {
+  console.log("Đã thêm vào giỏ:", product.name);
+  
+  // Gửi thông tin sản phẩm sang component Giỏ Hàng
+  // Bạn nên truyền object chứa đầy đủ thông tin cần thiết
+  cartBus.emit('add-to-cart', {
+    id: product.id,
+    name: product.name,
+    price: product.price,
+    image: product.image,
+    quantity: 1 // Mặc định mỗi lần nhấn là thêm 1
+  });
+  
+  // Tùy chọn: Hiển thị thông báo nhỏ cho người dùng
+  // alert(`Đã thêm ${product.name} vào giỏ hàng!`);
 }
 </script>
 
@@ -104,13 +122,40 @@ const openCartPopup = () => {
           <div class="card-content">
             <h3 class="prod-name">{{ item.name }}</h3>
             <p class="prod-desc">Món ngon bán chạy nhất tuần qua...</p> <div class="card-footer">
-              <span class="price">{{ item.price }}</span>
-              <button class="add-btn">+</button>
+              <span class="price">{{ item.price.toLocaleString('vi-VN') }}₫</span>
+              
+              <button class="add-btn" @click="addToCart(item)">+</button>
             </div>
           </div>
         </div>
       </div>
     </section>
+
+    <div class="footer">
+      <div class="footer-container">
+        <div class="footer-column branding">
+          <img src="../../../assets/anh.logo/anhnen.png" alt="Logo" class="footer-logo">
+          
+        </div>
+        <div class="footer-column">
+          <h4>Người dùng</h4>
+          <ul>
+            <li><router-link to="">Có gì mới?</router-link></li>
+            <li><router-link to="">Món ngon</router-link></li>
+            <li><router-link to="">Dịch vụ Food</router-link></li>
+          </ul>
+        </div>
+        <div class="footer-column">
+          <h4>Đối tác tài xế</h4>
+          <ul>
+            <li><router-link to="">Thông tin mới</router-link></li>
+            <li><router-link to="">Di chuyển</router-link></li>
+            <li><router-link to="">Trung tâm tài xế</router-link></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom"><p>Theo dõi chúng tôi @2026</p></div>
+    </div>
 
   </div>
 </template>
@@ -118,9 +163,8 @@ const openCartPopup = () => {
 <style scoped>
 /* --- CẤU TRÚC CHUNG --- */
 .page-container {
-  max-width: 1200px;
+  width: 100%;
   margin: 0 auto;
-  padding: 20px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
   color: #1c1c1c;
 }
@@ -141,7 +185,14 @@ const openCartPopup = () => {
 }
 /* ----------*/
 .main {
+  max-width: 1200px;
+  margin: 0 auto;
   box-shadow: 0 8px 6px -6px black;
+}
+.menu-section {
+  max-width: 1200px;
+  margin: 0 auto;
+  
 }
 
 .icon-header {
@@ -262,4 +313,16 @@ const openCartPopup = () => {
   align-items: center;
   justify-content: center;
 }
+
+/* --------------- */
+
+.footer { background-color: #f0fbf4; padding: 60px 0 20px; border-top: 4px solid #00b14f; margin-top: 50px; }
+.footer-container { width: 100%; margin: 0 auto; display: flex; justify-content: space-between; flex-wrap: wrap; padding: 0 0px; gap: 40px; }
+.footer-column { flex: 1; min-width: 250px; }
+.footer-logo { width: 150px; margin-bottom: 20px; }
+.footer-column h4 { margin-bottom: 20px; font-size: 18px; color: #333; }
+.footer-column ul { list-style: none; }
+.footer-column li { margin-bottom: 10px; }
+.footer-column a { text-decoration: none; color: #666; font-size: 15px; }
+.map-container { margin-top: 15px; border-radius: 8px; overflow: hidden; }
 </style>
