@@ -1,109 +1,183 @@
 <template>
   <div class="checkout-page-wrapper">
-    <div class="checkout-container">
+    <div class="checkout-container-desktop">
+      
       <div class="checkout-header">
-        <button class="back-btn" @click="$router.go(-1)">←</button>
-        <h1>Thanh toán</h1>
+        <button class="back-btn" @click="$router.go(-1)">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          Quay lại
+        </button>
+        <h1>Xác nhận thanh toán</h1>
       </div>
 
-      <div class="checkout-body">
-        <div class="section">
-          <h3>Tóm tắt đơn hàng</h3>
-          <div class="order-items">
-            <div v-for="item in items" :key="item.id" class="order-item">
-              <div class="item-qty">{{ item.quantity }}x</div>
-              <div class="item-details">
-                <div class="name">{{ item.name }}</div>
-                <div class="note" v-if="item.note">{{ item.note }}</div>
-                <div class="edit-btn">Chỉnh sửa</div>
-              </div>
-              <div class="item-price">{{ formatCurrency(item.price * item.quantity) }}</div>
+      <div class="checkout-content">
+        <div class="left-column">
+          
+          <div class="section-card address-section">
+            <div class="section-title">
+              <span class="icon"></span> Thông tin giao hàng
+            </div>
+            <div class="address-box">
+               <div class="user-info-row">
+                 <strong>Đơn hàng của bạn</strong>
+               </div>
+               
+               <div class="input-wrapper">
+                 <textarea v-model="userInfo.address" class="address-input" rows="2" placeholder="Nhập địa chỉ chi tiết..."></textarea>
+                 
+                 <div class="button-group-vertical">
+                   <button class="detect-btn" @click="setHardLocation">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#ff4757" stroke="#ff4757" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                      <circle cx="12" cy="10" r="3" fill="white" stroke="none"></circle>
+                    </svg>  
+                    <span class="btn-text">Vị trí hiện tại</span>
+                   </button>
+
+                   <button class="map-btn" @click="openMapModal">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+                      <line x1="8" y1="2" x2="8" y2="18"></line>
+                      <line x1="16" y1="6" x2="16" y2="22"></line>
+                    </svg>
+                    <span class="btn-text">Chọn trên bản đồ</span>
+                   </button>
+                 </div>
+               </div>
             </div>
           </div>
-          <div class="subtotal-row">
-            <span>Tổng tạm tính</span>
-            <span>{{ formatCurrency(subTotal) }}</span>
-          </div>
-        </div>
 
-        <div class="section address-section">
-          <h3>Giao tới</h3>
-          <div class="address-box">
-             <div class="location-icon">📍</div>
-             <div class="address-content">
-               <div class="user-name">{{ userInfo.name }} | {{ userInfo.phone }}</div>
-               <textarea v-model="userInfo.address" class="address-input" rows="2"></textarea>
-             </div>
-             <button class="change-addr-btn" @click="detectLocation">Vị trí hiện tại</button>
-          </div>
-        </div>
+          <div class="section-card shipping-section">
+            <div class="section-title">
+              <span class="icon"></span> Tùy chọn giao hàng
+            </div>
+            <div class="shipping-options">
+              <label class="ship-option" :class="{ active: selectedShip === 'priority' }">
+                <input type="radio" value="priority" v-model="selectedShip">
+                <div class="ship-info">
+                  <div class="ship-name">Ưu tiên • 29 phút <span class="badge">Nhanh nhất</span></div>
+                  <div class="ship-desc">Đơn hàng được ưu tiên giao trước</div>
+                </div>
+                <div class="ship-price">{{ formatCurrency(36000) }}</div>
+              </label>
 
-        <div class="section shipping-section">
-          <h3>Tùy chọn giao hàng</h3>
-          
-          <div class="shipping-options">
-            <label class="ship-option" :class="{ active: selectedShip === 'priority' }">
-              <input type="radio" value="priority" v-model="selectedShip">
-              <div class="ship-info">
-                <div class="ship-name">Ưu tiên • 29 phút <span class="info-icon">ℹ️</span></div>
-                <div class="ship-desc">Đơn hàng được ưu tiên giao trước</div>
+              <label class="ship-option" :class="{ active: selectedShip === 'fast' }">
+                <input type="radio" value="fast" v-model="selectedShip">
+                <div class="ship-info">
+                  <div class="ship-name">Nhanh • 35 phút</div>
+                </div>
+                <div class="ship-price">{{ formatCurrency(28000) }}</div>
+              </label>
+
+              <label class="ship-option" :class="{ active: selectedShip === 'saver' }">
+                <input type="radio" value="saver" v-model="selectedShip">
+                <div class="ship-info">
+                  <div class="ship-name">Tiết kiệm • 50 phút</div>
+                </div>
+                <div class="ship-price">{{ formatCurrency(22000) }}</div>
+              </label>
+            </div>
+          </div>
+
+          <div class="section-card payment-section">
+            <div class="section-title">
+              <span class="icon"></span> Phương thức thanh toán
+            </div>
+            <div class="payment-methods">
+              <div class="pay-method" :class="{ active: paymentMethod === 'cash' }" @click="selectPayment('cash')">
+                <div class="radio-circle"></div>
+                <span>💵 Tiền mặt khi nhận hàng</span>
               </div>
-              <div class="ship-price">{{ formatCurrency(36000) }}</div>
-            </label>
 
-            <label class="ship-option" :class="{ active: selectedShip === 'fast' }">
-              <input type="radio" value="fast" v-model="selectedShip">
-              <div class="ship-info">
-                <div class="ship-name">Nhanh • 35 phút</div>
+              <div class="pay-method" :class="{ active: paymentMethod === 'banking' }" @click="selectPayment('banking')">
+                <div class="radio-circle"></div>
+                <span>🏦 Chuyển khoản</span>
               </div>
-              <div class="ship-price">{{ formatCurrency(28000) }}</div>
-            </label>
+            </div>
 
-            <label class="ship-option" :class="{ active: selectedShip === 'saver' }">
-              <input type="radio" value="saver" v-model="selectedShip">
-              <div class="ship-info">
-                <div class="ship-name">Tiết kiệm • 50 phút <span class="info-icon">ℹ️</span></div>
+            <div v-if="paymentMethod === 'banking'" class="qr-container">
+              <div class="qr-header">
+                Quét mã để thanh toán
+                <span class="timer">Hết hạn sau: {{ formatTime(qrTimeLeft) }}</span>
               </div>
-              <div class="ship-price">{{ formatCurrency(22000) }}</div>
-            </label>
+              <div class="qr-body">
+                <img :src="qrCodeUrl" alt="QR Code" class="qr-img" />
+                <p class="qr-note">Nội dung CK: <strong>{{ randomOrderCode }}</strong></p>
+                <button class="refresh-qr" @click="generateNewQR">🔄 Lấy mã mới</button>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="section payment-section">
-          <h3>Thông tin thanh toán</h3>
-          <div class="payment-methods">
-            <label class="pay-method" :class="{ active: paymentMethod === 'cash' }">
-              <input type="radio" value="cash" v-model="paymentMethod">
-              <span>💵 Tiền mặt</span>
-            </label>
-            <label class="pay-method" :class="{ active: paymentMethod === 'banking' }">
-              <input type="radio" value="banking" v-model="paymentMethod">
-              <span>🏦 Chuyển khoản / ZaloPay</span>
-            </label>
+        <div class="right-column">
+          <div class="order-summary-card">
+            <h3>Tóm tắt đơn hàng</h3>
+            <div class="order-items-list">
+              <div v-for="item in items" :key="item.id" class="summary-item">
+                <div class="item-qty">{{ item.quantity }}x</div>
+                <div class="item-name">
+                  {{ item.name }}
+                  <span v-if="item.note" class="item-note">({{ item.note }})</span>
+                </div>
+                <div class="item-price">{{ formatCurrency(item.price * item.quantity) }}</div>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <div class="price-row">
+              <span>Tạm tính</span>
+              <span>{{ formatCurrency(subTotal) }}</span>
+            </div>
+            <div class="price-row">
+              <span>Phí giao hàng</span>
+              <span>{{ formatCurrency(shipPrice) }}</span>
+            </div>
+             <div class="price-row discount" v-if="selectedShip === 'saver'">
+              <span>Khuyến mãi vận chuyển</span>
+              <span>-14.000₫</span>
+            </div>
+            <div class="divider"></div>
+            <div class="total-row">
+              <span>Tổng cộng</span>
+              <span class="total-price">{{ formatCurrency(finalTotal) }}</span>
+            </div>
+            <button class="place-order-btn" @click="submitOrder">
+              ĐẶT ĐƠN HÀNG
+            </button>
           </div>
         </div>
-
-      </div>
-
-      <div class="checkout-footer">
-        <div class="footer-row">
-           <span class="label">Tổng cộng</span>
-           <span class="total-val">{{ formatCurrency(finalTotal) }}</span>
-        </div>
-        <div class="saved-badge" v-if="selectedShip === 'saver'">
-           Bạn tiết kiệm được 14.000₫ 🚀
-        </div>
-
-        <button class="place-order-btn" @click="submitOrder">
-          Đặt đơn
-        </button>
       </div>
     </div>
+
+    <div v-if="showMapModal" class="map-modal-overlay" @click.self="closeMap">
+      <div class="map-modal-content">
+        <div class="map-header">
+          <h3>Chọn vị trí giao hàng</h3>
+          <button class="close-map-btn" @click="closeMap">×</button>
+        </div>
+        <div class="map-body">
+          <p class="map-instruction">👇 Kéo bản đồ và Click chọn vị trí chính xác</p>
+          
+          <div id="interactive-map" class="interactive-map-container"></div>
+
+          <div class="selected-address-bar">
+            <span v-if="tempSelectedAddress">📍 {{ tempSelectedAddress }}</span>
+            <span v-else>Đang chờ chọn vị trí...</span>
+          </div>
+
+          <div class="map-footer">
+            <button class="confirm-map-btn" @click="confirmMapSelection" :disabled="!tempSelectedAddress">
+              Xác nhận địa chỉ này
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
 <script>
-import { ref, computed, onMounted, reactive } from 'vue';
+import { ref, computed, onMounted, reactive, onUnmounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 
 export default {
@@ -111,196 +185,341 @@ export default {
   setup() {
     const router = useRouter();
     const items = ref([]);
-    const selectedShip = ref('fast'); // Mặc định là Nhanh
+    const selectedShip = ref('fast');
     const paymentMethod = ref('cash');
     
-    // Dữ liệu người dùng (Mô phỏng lấy từ login)
+    // --- MAP LOGIC ---
+    const showMapModal = ref(false);
+    const tempSelectedAddress = ref('');
+    let mapInstance = null;
+    let markerInstance = null;
+
+    // --- QR LOGIC ---
+    const qrCodeUrl = ref('');
+    const randomOrderCode = ref('');
+    const qrTimeLeft = ref(600); 
+    let timerInterval = null;
+
     const userInfo = reactive({
-      name: 'Khách hàng',
-      phone: '09xxxxxxx',
-      address: '15 Ngõ 5 Lý Ái, X.Sơn Đông, TP.Hà Nội' // Giá trị mặc định
+      name: '',
+      phone: '',
+      address: '' 
     });
 
-    // Bảng giá ship
     const shippingRates = {
       priority: 36000,
       fast: 28000,
       saver: 22000
     };
 
-    // Load dữ liệu từ localStorage khi vào trang
     onMounted(() => {
-      const storedItems = localStorage.getItem('tempCart');
-      if (storedItems) {
-        items.value = JSON.parse(storedItems);
+      // 1. Load Leaflet CSS & JS (Thư viện bản đồ miễn phí)
+      if (!document.getElementById('leaflet-css')) {
+        const link = document.createElement('link');
+        link.id = 'leaflet-css';
+        link.rel = 'stylesheet';
+        link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        document.head.appendChild(link);
       }
+      
+      if (!document.getElementById('leaflet-js')) {
+        const script = document.createElement('script');
+        script.id = 'leaflet-js';
+        script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+        document.head.appendChild(script);
+      }
+
+      // 2. Load User Info & Cart
+      const storedItems = localStorage.getItem('tempCart');
+      if (storedItems) items.value = JSON.parse(storedItems);
       
       const storedUser = localStorage.getItem('userLogin');
       if (storedUser) {
         const u = JSON.parse(storedUser);
         userInfo.name = u.HoTen || u.userName || 'Bạn';
-        // Nếu user có lưu địa chỉ trước đó thì lấy ra, không thì dùng mặc định
+        userInfo.phone = u.phone || '';
         if(u.address) userInfo.address = u.address;
+      } else {
+        userInfo.name = "Khách (Chưa đăng nhập)";
       }
     });
 
-    // Mô phỏng định vị (Đổi địa chỉ ngẫu nhiên để test tính năng "không mặc định")
-    const detectLocation = () => {
-      const locations = [
-        "Tòa nhà Landmark 72, Phạm Hùng, Hà Nội",
-        "Số 1 Đại Cồ Việt, Hai Bà Trưng, Hà Nội",
-        "Vincom Royal City, Thanh Xuân, Hà Nội"
-      ];
-      // Chọn ngẫu nhiên 1 địa chỉ để giả vờ định vị
-      const randomLoc = locations[Math.floor(Math.random() * locations.length)];
-      userInfo.address = randomLoc;
-      alert("Đã cập nhật vị trí hiện tại: " + randomLoc);
-    };
-
-    // --- TÍNH TOÁN ---
-    const subTotal = computed(() => {
-      return items.value.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    onUnmounted(() => {
+      if (timerInterval) clearInterval(timerInterval);
     });
 
+    const setHardLocation = () => {
+      userInfo.address = "Trường Cao Đẳng Công Nghệ Cao Hà Nội";
+      alert("Vị trí của bạn đang ở Trường Cao Đẳng Công Nghệ Cao Hà Nội");
+    };
+
+    // --- LOGIC MỞ BẢN ĐỒ THẬT ---
+    const openMapModal = async () => {
+      showMapModal.value = true;
+      // Đợi DOM render xong mới khởi tạo Map
+      await nextTick();
+      initMap();
+    };
+
+    const closeMap = () => {
+      showMapModal.value = false;
+    };
+
+    const initMap = () => {
+      // Kiểm tra thư viện Leaflet đã tải chưa
+      if (typeof L === 'undefined') {
+        alert("Đang tải bản đồ, vui lòng thử lại sau 2 giây...");
+        return;
+      }
+
+      // Nếu map đã có thì không tạo lại
+      if (mapInstance) {
+        mapInstance.remove();
+      }
+
+      // Tọa độ mặc định: Hà Nội
+      const defaultLat = 21.0285;
+      const defaultLng = 105.8542;
+
+      // Khởi tạo bản đồ
+      mapInstance = L.map('interactive-map').setView([defaultLat, defaultLng], 13);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(mapInstance);
+
+      // Thêm Marker mặc định
+      markerInstance = L.marker([defaultLat, defaultLng], {draggable: true}).addTo(mapInstance);
+
+      // Sự kiện: Khi click vào bản đồ
+      mapInstance.on('click', async (e) => {
+        const { lat, lng } = e.latlng;
+        updateMarkerAndAddress(lat, lng);
+      });
+
+      // Sự kiện: Khi kéo marker xong
+      markerInstance.on('dragend', async (e) => {
+        const { lat, lng } = e.target.getLatLng();
+        updateMarkerAndAddress(lat, lng);
+      });
+    };
+
+    const updateMarkerAndAddress = async (lat, lng) => {
+      // 1. Di chuyển marker
+      markerInstance.setLatLng([lat, lng]);
+      
+      // 2. Hiển thị "Đang tải..."
+      tempSelectedAddress.value = "Đang lấy địa chỉ...";
+
+      // 3. Gọi API miễn phí để lấy tên đường (Reverse Geocoding)
+      try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+        const data = await response.json();
+        if (data && data.display_name) {
+          tempSelectedAddress.value = data.display_name;
+        } else {
+          tempSelectedAddress.value = "Không tìm thấy tên đường tại vị trí này.";
+        }
+      } catch (error) {
+        tempSelectedAddress.value = "Lỗi kết nối, vui lòng thử lại.";
+      }
+    };
+
+    const confirmMapSelection = () => {
+      if (tempSelectedAddress.value) {
+        userInfo.address = tempSelectedAddress.value;
+        closeMap();
+      }
+    };
+
+    // --- PAYMENT & QR ---
+    const selectPayment = (method) => {
+      paymentMethod.value = method;
+      if (method === 'banking') generateNewQR();
+      else clearInterval(timerInterval);
+    };
+
+    const generateNewQR = () => {
+      const randomCode = 'DH' + Math.floor(Math.random() * 1000000);
+      randomOrderCode.value = randomCode;
+      qrCodeUrl.value = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=CHUYEN_KHOAN_${randomCode}&random=${Date.now()}`;
+      qrTimeLeft.value = 600;
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        if (qrTimeLeft.value > 0) qrTimeLeft.value--;
+        else {
+          clearInterval(timerInterval);
+          alert("Mã QR đã hết hạn!");
+        }
+      }, 1000);
+    };
+
+    const formatTime = (seconds) => {
+      const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+      const s = (seconds % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    };
+
+    const subTotal = computed(() => items.value.reduce((sum, item) => sum + (item.price * item.quantity), 0));
     const shipPrice = computed(() => shippingRates[selectedShip.value]);
-
     const finalTotal = computed(() => subTotal.value + shipPrice.value);
-
     const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
 
-    // --- XỬ LÝ ĐẶT ĐƠN ---
     const submitOrder = () => {
        if(items.value.length === 0) return alert("Giỏ hàng trống!");
-       
-       const orderData = {
-         user: userInfo,
-         items: items.value,
-         shippingMethod: selectedShip.value,
-         shippingCost: shipPrice.value,
-         payment: paymentMethod.value,
-         total: finalTotal.value,
-         date: new Date().toISOString()
-       };
-
-       console.log("Dữ liệu gửi lên Server:", JSON.stringify(orderData, null, 2));
-       alert(`Đặt đơn thành công!\nTổng: ${formatCurrency(finalTotal.value)}\nShip: ${selectedShip.value}\nĐịa chỉ: ${userInfo.address}`);
-       
-       // Xóa giỏ hàng sau khi đặt
+       if(!userInfo.address) return alert("Vui lòng nhập địa chỉ giao hàng!");
+       alert(`Đặt đơn thành công!\nKhách hàng: ${userInfo.name}\nTổng: ${formatCurrency(finalTotal.value)}\nĐịa chỉ: ${userInfo.address}`);
        localStorage.removeItem('tempCart');
-       // Chuyển về trang chủ
-       router.push('/');
+       router.push('/Food2');
     };
 
     return {
       items, userInfo, selectedShip, paymentMethod,
-      subTotal, finalTotal, formatCurrency,
-      detectLocation, submitOrder
+      subTotal, finalTotal, shipPrice, formatCurrency,
+      setHardLocation, submitOrder,
+      selectPayment, qrCodeUrl, qrTimeLeft, formatTime, generateNewQR, randomOrderCode,
+      showMapModal, openMapModal, closeMap, tempSelectedAddress, confirmMapSelection
     };
   }
 }
 </script>
 
 <style scoped>
-/* Giao diện Desktop giả lập Mobile app style */
+/* BACKGROUND */
 .checkout-page-wrapper {
-  background-color: #f0f2f5;
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  padding: 20px 0;
+  background-color: #f0f2f5; min-height: 100vh; padding: 40px 20px; font-family: 'Segoe UI', sans-serif;
+}
+.checkout-container-desktop { max-width: 1100px; margin: 0 auto; }
+
+/* HEADER */
+.checkout-header { margin-bottom: 20px; display: flex; align-items: center; }
+.back-btn { background: none; border: none; font-size: 16px; cursor: pointer; color: #666; display: flex; align-items: center; gap: 5px; margin-right: 20px; }
+.back-btn:hover { color: #00b14f; }
+.checkout-header h1 { font-size: 24px; font-weight: 700; color: #333; margin: 0; }
+
+/* LAYOUT */
+.checkout-content { display: flex; gap: 30px; align-items: flex-start; }
+.left-column { flex: 2; }
+.right-column { flex: 1; position: sticky; top: 20px; }
+
+/* CARD STYLE */
+.section-card, .order-summary-card {
+  background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); padding: 24px; margin-bottom: 20px;
+}
+.section-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; color: #333; }
+.icon { font-size: 20px; }
+
+/* 1. ĐỊA CHỈ & NÚT BẤM */
+.address-box { background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee; }
+.user-info-row { font-weight: 600; margin-bottom: 10px; color: #333; font-size: 16px; }
+.input-wrapper { display: flex; gap: 10px; align-items: flex-start; }
+.address-input {
+  flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 6px; resize: none; font-family: inherit; transition: background 0.3s;
+}
+.address-input:focus { border-color: #00b14f; outline: none; background: white; }
+
+/* Nhóm nút bấm dọc */
+.button-group-vertical {
+  display: flex; flex-direction: column; gap: 8px;
 }
 
-.checkout-container {
-  width: 500px; /* Giới hạn chiều rộng để giống giao diện điện thoại/video */
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
+.detect-btn, .map-btn {
+  display: flex; align-items: center; justify-content: flex-start;
+  white-space: nowrap; height: 36px; padding: 0 15px;
+  border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer; transition: 0.2s;
+  width: 160px; /* Cố định chiều rộng để thẳng hàng */
 }
 
-.checkout-header {
-  padding: 15px;
-  background: white;
-  border-bottom: 1px solid #eee;
-  display: flex;
-  align-items: center;
+.detect-btn { border: 1px solid #ff4757; color: #ff4757; background: white; }
+.detect-btn:hover { background: #fff0f1; }
+
+.map-btn { border: 1px solid #2980b9; color: #2980b9; background: white; }
+.map-btn:hover { background: #ebf5fb; }
+
+.btn-text { margin-left: 8px; }
+
+/* --- CSS MAP MODAL --- */
+.map-modal-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6); z-index: 2000;
+  display: flex; justify-content: center; align-items: center;
 }
-.back-btn { background: none; border: none; font-size: 24px; cursor: pointer; margin-right: 15px; }
-.checkout-header h1 { font-size: 18px; margin: 0; font-weight: bold; }
-
-.checkout-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0 0 100px 0; /* Để trống chỗ cho footer */
-  background: #f7f7f7;
+.map-modal-content {
+  background: white; width: 900px; max-width: 95%; height: 80vh; 
+  border-radius: 12px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+  display: flex; flex-direction: column;
 }
-
-.section {
-  background: white;
-  margin-bottom: 10px;
-  padding: 15px;
+.map-header {
+  padding: 15px 20px; background: #f0f2f5; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd;
 }
+.map-header h3 { margin: 0; font-size: 18px; }
+.close-map-btn {
+  background: none; border: none; font-size: 28px; cursor: pointer; line-height: 1;
+}
+.map-body { flex: 1; display: flex; flex-direction: column; position: relative; padding: 0; }
+.map-instruction {
+  text-align: center; background: #fff3cd; color: #856404; padding: 8px; margin: 0; font-size: 14px; border-bottom: 1px solid #ffeeba;
+}
+.interactive-map-container {
+  flex: 1; width: 100%; background: #eee;
+}
+.selected-address-bar {
+  padding: 10px 20px; background: white; border-top: 1px solid #eee; font-weight: 500; color: #333;
+}
+.map-footer {
+  padding: 15px; background: #f9f9f9; border-top: 1px solid #eee; text-align: center;
+}
+.confirm-map-btn {
+  background: #00b14f; color: white; border: none; padding: 12px 30px;
+  font-weight: bold; font-size: 16px; border-radius: 6px; cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,177,79,0.3);
+}
+.confirm-map-btn:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; }
+.confirm-map-btn:hover:not(:disabled) { background: #009e39; }
 
-.section h3 { font-size: 16px; margin: 0 0 15px 0; font-weight: 700; color: #333; }
-
-/* 1. Item Styles */
-.order-item { display: flex; margin-bottom: 15px; align-items: flex-start; }
-.item-qty { font-weight: bold; width: 30px; color: #00b14f; border: 1px solid #00b14f; border-radius: 4px; text-align: center; margin-right: 10px; font-size: 13px; }
-.item-details { flex: 1; }
-.item-details .name { font-weight: 500; color: #333; }
-.item-details .note { font-size: 12px; color: #666; }
-.item-details .edit-btn { color: #0088cc; font-size: 12px; cursor: pointer; margin-top: 2px; }
-.item-price { font-weight: 600; }
-.subtotal-row { display: flex; justify-content: space-between; border-top: 1px solid #eee; padding-top: 10px; font-weight: 500; }
-
-/* 2. Address Styles */
-.address-box { display: flex; align-items: flex-start; }
-.location-icon { color: #ff4757; font-size: 20px; margin-right: 10px; margin-top: 5px; }
-.address-content { flex: 1; margin-right: 10px; }
-.user-name { font-weight: bold; font-size: 14px; margin-bottom: 5px; }
-.address-input { width: 100%; border: 1px dashed #ccc; padding: 5px; border-radius: 4px; font-family: inherit; font-size: 14px; resize: none; background: #fafafa; }
-.change-addr-btn { font-size: 12px; color: #00b14f; border: 1px solid #00b14f; background: white; padding: 5px 10px; border-radius: 15px; cursor: pointer; white-space: nowrap; height: fit-content; align-self: center; }
-
-/* 3. Shipping Options */
-.shipping-options { display: flex; flex-direction: column; gap: 10px; }
-.ship-option { display: flex; align-items: center; border: 1px solid #eee; padding: 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
-.ship-option.active { border-color: #00b14f; background-color: #f0fbf4; }
-.ship-option input { margin-right: 12px; accent-color: #00b14f; }
+/* 2. SHIPPING */
+.shipping-options { display: flex; flex-direction: column; gap: 12px; }
+.ship-option { display: flex; align-items: center; padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+.ship-option:hover { border-color: #00b14f; }
+.ship-option.active { border-color: #00b14f; background-color: #f0fbf4; box-shadow: 0 0 0 1px #00b14f; }
+.ship-option input { margin-right: 15px; width: 18px; height: 18px; accent-color: #00b14f; }
 .ship-info { flex: 1; }
-.ship-name { font-weight: 600; font-size: 14px; }
-.ship-desc { font-size: 12px; color: #666; margin-top: 2px; }
-.ship-price { font-weight: bold; font-size: 14px; }
+.ship-name { font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+.badge { font-size: 11px; background: #ff4757; color: white; padding: 2px 6px; border-radius: 4px; }
+.ship-desc { font-size: 13px; color: #666; margin-top: 4px; }
+.ship-price { font-weight: 700; color: #333; }
 
-/* 4. Payment Styles */
-.payment-methods { display: flex; flex-direction: column; gap: 10px; }
-.pay-method { display: flex; align-items: center; padding: 10px; border: 1px solid #eee; border-radius: 6px; cursor: pointer; }
-.pay-method.active { border-color: #00b14f; background: #f0fbf4; }
-.pay-method input { margin-right: 10px; accent-color: #00b14f; }
+/* 3. PAYMENT */
+.payment-methods { display: flex; gap: 15px; flex-wrap: wrap; }
+.pay-method { flex: 1; min-width: 200px; border: 1px solid #e0e0e0; padding: 15px; border-radius: 8px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: 0.2s; }
+.pay-method:hover { border-color: #00b14f; }
+.pay-method.active { border-color: #00b14f; background: #f0fbf4; font-weight: 600; }
+.radio-circle { width: 18px; height: 18px; border: 2px solid #ccc; border-radius: 50%; position: relative; }
+.pay-method.active .radio-circle { border-color: #00b14f; }
+.pay-method.active .radio-circle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 8px; height: 8px; background: #00b14f; border-radius: 50%; }
 
-/* FOOTER */
-.checkout-footer {
-  position: sticky; bottom: 0;
-  background: white;
-  padding: 15px 20px;
-  box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
-  border-top: 1px solid #eee;
-}
-.footer-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-.footer-row .label { font-size: 16px; font-weight: 500; }
-.footer-row .total-val { font-size: 20px; font-weight: bold; color: #333; }
-.saved-badge { background: #fff0f1; color: #ff4757; font-size: 12px; padding: 5px 10px; border-radius: 12px; display: inline-block; margin-bottom: 10px; font-weight: 500; }
-.place-order-btn {
-  width: 100%;
-  background: #00b14f;
-  color: white;
-  border: none;
-  padding: 15px;
-  font-size: 18px;
-  font-weight: bold;
-  border-radius: 8px;
-  cursor: pointer;
-}
-.place-order-btn:hover { background: #009e39; }
+/* QR CODE */
+.qr-container { margin-top: 20px; background: #f3f4f6; padding: 20px; border-radius: 12px; text-align: center; border: 1px dashed #aaa; }
+.qr-header { font-weight: bold; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+.timer { color: #d63031; font-family: monospace; font-size: 16px; background: white; padding: 2px 8px; border-radius: 4px; }
+.qr-img { width: 180px; height: 180px; background: white; padding: 10px; border-radius: 8px; }
+.qr-note { margin: 10px 0; font-size: 14px; }
+.refresh-qr { background: #333; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+.refresh-qr:hover { background: #555; }
+
+/* RIGHT COLUMN */
+.order-summary-card h3 { margin-top: 0; font-size: 18px; margin-bottom: 15px; }
+.order-items-list { max-height: 300px; overflow-y: auto; margin-bottom: 15px; }
+.summary-item { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; }
+.item-qty { font-weight: bold; color: #00b14f; width: 30px; }
+.item-name { flex: 1; padding-right: 10px; }
+.item-note { font-style: italic; color: #888; font-size: 12px; }
+.item-price { font-weight: 600; }
+.divider { height: 1px; background: #eee; margin: 15px 0; }
+.price-row { display: flex; justify-content: space-between; margin-bottom: 10px; color: #555; }
+.price-row.discount { color: #d63031; }
+.total-row { display: flex; justify-content: space-between; font-size: 18px; font-weight: 700; color: #333; margin-bottom: 20px; }
+.total-price { color: #00b14f; font-size: 22px; }
+.place-order-btn { width: 100%; background: #00b14f; color: white; border: none; padding: 18px; font-size: 18px; font-weight: bold; text-transform: uppercase; border-radius: 8px; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 10px rgba(0, 177, 79, 0.3); }
+.place-order-btn:hover { background: #009e39; transform: translateY(-2px); }
 </style>
