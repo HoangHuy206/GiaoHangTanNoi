@@ -26,7 +26,7 @@
             </div>
 
             <div class="cart-items-list">
-              <div v-for="(item, index) in cartItems" :key="item.id" class="cart-item">
+              <div v-for="(item, index) in cartItems" :key="index" class="cart-item">
                 
                 <div class="item-checkbox">
                   <input type="checkbox" v-model="item.selected" style="transform: scale(1.3); cursor: pointer;">
@@ -102,7 +102,6 @@ export default {
       if (savedCart) {
         try {
           let items = JSON.parse(savedCart);
-          // Đảm bảo item nào cũng có thuộc tính selected (mặc định là false hoặc giữ nguyên)
           items = items.map(i => ({ ...i, selected: i.selected !== undefined ? i.selected : true }));
           cartItems.value = items;
         } catch (e) { cartItems.value = []; }
@@ -114,7 +113,6 @@ export default {
     onMounted(() => syncCart());
     watch(() => route.path, () => syncCart());
 
-    // Lưu giỏ hàng khi có thay đổi
     watch(cartItems, (newVal) => {
       if (newVal.length > 0) localStorage.setItem('myShoppingCart', JSON.stringify(newVal));
       else localStorage.removeItem('myShoppingCart');
@@ -123,7 +121,6 @@ export default {
     // --- TÍNH TOÁN ---
     const totalItems = computed(() => cartItems.value.reduce((total, item) => total + item.quantity, 0));
     
-    // Chỉ tính tiền những món được tích chọn
     const subTotal = computed(() => {
       return cartItems.value
         .filter(item => item.selected)
@@ -132,7 +129,6 @@ export default {
 
     const selectedCount = computed(() => cartItems.value.filter(i => i.selected).length);
 
-    // Xử lý Chọn tất cả
     const isSelectAll = computed({
       get: () => cartItems.value.length > 0 && cartItems.value.every(i => i.selected),
       set: (val) => { /* Xử lý ở toggleSelectAll */ }
@@ -154,27 +150,25 @@ export default {
     const openCart = () => isVisible.value = true;
     const closeCart = () => isVisible.value = false;
 
-    // --- CHUYỂN TRANG THANH TOÁN ---
     const goToCheckout = () => {
-      // 1. Lọc ra những món ĐƯỢC CHỌN
       const itemsToPay = cartItems.value.filter(item => item.selected);
-      
       if (itemsToPay.length === 0) return alert("Vui lòng tích chọn món cần thanh toán!");
-
-      // 2. Chỉ lưu những món đã chọn vào tempCart để trang Thanh Toán hiển thị
       localStorage.setItem('tempCart', JSON.stringify(itemsToPay));
-      
       closeCart();
       router.push('/thanhtoan');
     };
 
+    // --- SỬA LỖI TRÙNG ID TẠI ĐÂY ---
     cartBus.on('add-to-cart', (product) => {
-      const existingItem = cartItems.value.find(item => item.id === product.id);
+      // Logic cũ (SAI): const existingItem = cartItems.value.find(item => item.id === product.id);
+      
+      // Logic MỚI (ĐÚNG): Kiểm tra cả ID và Tên món
+      const existingItem = cartItems.value.find(item => item.id === product.id && item.name === product.name);
+      
       if (existingItem) {
         existingItem.quantity++;
-        existingItem.selected = true; // Tự động tick chọn khi thêm lại
+        existingItem.selected = true; 
       } else {
-        // Mặc định selected: true khi mới thêm
         cartItems.value.push({ ...product, quantity: 1, selected: true });
       }
       isVisible.value = true;

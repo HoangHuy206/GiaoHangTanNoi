@@ -12,7 +12,7 @@
       <div class="checkout-content">
         <div class="left-column">
           <div class="section-card address-section">
-            <div class="section-title"><span class="icon"></span> Thông tin giao hàng</div>
+            <div class="section-title"><span class="icon">📍</span> Thông tin giao hàng</div>
             <div class="address-box">
                <div class="user-info-row"><strong>Đơn hàng của bạn</strong></div>
                <div class="input-wrapper">
@@ -58,13 +58,13 @@
           </div>
 
           <div class="section-card payment-section">
-            <div class="section-title"><span class="icon"></span> Phương thức thanh toán</div>
+            <div class="section-title"><span class="icon">💳</span> Phương thức thanh toán</div>
             <div class="payment-methods">
               <div class="pay-method" :class="{ active: paymentMethod === 'cash' }" @click="selectPayment('cash')">
-                <div class="radio-circle"></div><span>Thanh toán bằng tiền mặt</span>
+                <div class="radio-circle"></div><span>💵 Tiền mặt khi nhận hàng</span>
               </div>
               <div class="pay-method" :class="{ active: paymentMethod === 'banking' }" @click="selectPayment('banking')">
-                <div class="radio-circle"></div><span> Thanh toán bằng chuyển khoản</span>
+                <div class="radio-circle"></div><span>🏦 Chuyển khoản</span>
               </div>
             </div>
             <div v-if="paymentMethod === 'banking'" class="qr-container">
@@ -72,7 +72,7 @@
               <div class="qr-body">
                 <img :src="qrCodeUrl" alt="QR Code" class="qr-img" />
                 <p class="qr-note">Nội dung CK: <strong>{{ randomOrderCode }}</strong></p>
-                <button class="refresh-qr" @click="generateNewQR"> Lấy mã mới</button>
+                <button class="refresh-qr" @click="generateNewQR">🔄 Lấy mã mới</button>
               </div>
             </div>
           </div>
@@ -107,7 +107,7 @@
           <p class="map-instruction">👇 Kéo bản đồ và Click chọn vị trí chính xác</p>
           <div id="interactive-map" class="interactive-map-container"></div>
           <div class="selected-address-bar"><span v-if="tempSelectedAddress">📍 {{ tempSelectedAddress }}</span><span v-else>Đang chờ chọn vị trí...</span></div>
-          <div class="map-footer"><button class="confirm-map-btn" @click="confirmMapSelection" :disabled="!tempSelectedAddress">Xác nhận địa chỉ này</button></div>
+          <div class="map-footer"><button class="confirm-map-btn" @click="confirmMapSelection" :disabled="!tempSelectedAddress">✅ Xác nhận địa chỉ này</button></div>
         </div>
       </div>
     </div>
@@ -145,7 +145,6 @@ export default {
         const script = document.createElement('script'); script.id = 'leaflet-js'; script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'; document.head.appendChild(script);
       }
 
-      // Load items from tempCart (Những món đã chọn để thanh toán)
       const storedItems = localStorage.getItem('tempCart');
       if (storedItems) items.value = JSON.parse(storedItems);
       
@@ -220,28 +219,32 @@ export default {
     const finalTotal = computed(() => subTotal.value + shipPrice.value);
     const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
 
-    // --- LOGIC QUAN TRỌNG NHẤT: XỬ LÝ XÓA MÓN SAU KHI ĐẶT ---
+    // --- LOGIC QUAN TRỌNG ĐÃ ĐƯỢC NÂNG CẤP ---
     const submitOrder = () => {
        if(items.value.length === 0) return alert("Giỏ hàng trống!");
        if(!userInfo.address) return alert("Vui lòng nhập địa chỉ giao hàng!");
 
        alert(`Đặt đơn thành công!\nKhách hàng: ${userInfo.name}\nTổng: ${formatCurrency(finalTotal.value)}\nĐịa chỉ: ${userInfo.address}`);
        
-       // 1. Lấy toàn bộ giỏ hàng gốc từ LocalStorage
+       // 1. Lấy giỏ hàng tổng từ bộ nhớ
        const savedCart = localStorage.getItem('myShoppingCart');
        let currentFullCart = savedCart ? JSON.parse(savedCart) : [];
 
-       // 2. Lọc ra những món CHƯA thanh toán (Giữ lại những món KHÔNG nằm trong tempCart)
-       // items.value là danh sách các món đang thanh toán (lấy từ tempCart)
-       const paidItemIds = items.value.map(item => item.id);
-       
-       const remainingItems = currentFullCart.filter(cartItem => !paidItemIds.includes(cartItem.id));
+       // 2. Lọc bỏ các món đã thanh toán (So sánh cả ID và TÊN MÓN để tránh xóa nhầm)
+       // items.value là danh sách món đang được thanh toán
+       const remainingItems = currentFullCart.filter(cartItem => {
+          // Giữ lại món nến nó KHÔNG nằm trong danh sách đang thanh toán
+          const isPaid = items.value.some(paidItem => 
+              paidItem.id === cartItem.id && paidItem.name === cartItem.name
+          );
+          return !isPaid; 
+       });
 
-       // 3. Lưu lại những món còn lại vào giỏ hàng gốc
+       // 3. Cập nhật lại bộ nhớ giỏ hàng
        if (remainingItems.length > 0) {
          localStorage.setItem('myShoppingCart', JSON.stringify(remainingItems));
        } else {
-         localStorage.removeItem('myShoppingCart'); // Nếu hết sạch thì xóa luôn key
+         localStorage.removeItem('myShoppingCart');
        }
 
        // 4. Xóa giỏ hàng tạm
@@ -263,7 +266,7 @@ export default {
 </script>
 
 <style scoped>
-/* (Giữ nguyên Style của bạn) */
+/* (Giữ nguyên CSS cũ) */
 .checkout-page-wrapper { background-color: #f0f2f5; min-height: 100vh; padding: 40px 20px; font-family: 'Segoe UI', sans-serif; }
 .checkout-container-desktop { max-width: 1100px; margin: 0 auto; }
 .checkout-header { margin-bottom: 20px; display: flex; align-items: center; }
