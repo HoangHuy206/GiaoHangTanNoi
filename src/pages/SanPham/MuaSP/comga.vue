@@ -131,15 +131,40 @@ const addToCart = (product) => {
       </div>
     </section>
 
+    <div class="footer">
+      <div class="footer-container">
+        <div class="footer-column branding">
+          <img src="../../../assets/anh.logo/anhnen.png" alt="Logo" class="footer-logo">
+          
+        </div>
+        <div class="footer-column">
+          <h4>Người dùng</h4>
+          <ul>
+            <li><router-link to="">Có gì mới?</router-link></li>
+            <li><router-link to="">Món ngon</router-link></li>
+            <li><router-link to="">Dịch vụ Food</router-link></li>
+          </ul>
+        </div>
+        <div class="footer-column">
+          <h4>Đối tác tài xế</h4>
+          <ul>
+            <li><router-link to="">Thông tin mới</router-link></li>
+            <li><router-link to="">Di chuyển</router-link></li>
+            <li><router-link to="">Trung tâm tài xế</router-link></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom"><p>Theo dõi chúng tôi @2026</p></div>
+    </div>
+
   </div>
 </template>
 
 <style scoped>
 /* --- CẤU TRÚC CHUNG --- */
 .page-container {
-  max-width: 1200px;
+  width: 100%;
   margin: 0 auto;
-  padding: 20px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
   color: #1c1c1c;
 }
@@ -160,7 +185,14 @@ const addToCart = (product) => {
 }
 /* ----------*/
 .main {
+  max-width: 1200px;
+  margin: 0 auto;
   box-shadow: 0 8px 6px -6px black;
+}
+.menu-section {
+  max-width: 1200px;
+  margin: 0 auto;
+  
 }
 
 .icon-header {
@@ -281,4 +313,16 @@ const addToCart = (product) => {
   align-items: center;
   justify-content: center;
 }
+
+/* --------------- */
+
+.footer { background-color: #f0fbf4; padding: 60px 0 20px; border-top: 4px solid #00b14f; margin-top: 50px; }
+.footer-container { width: 100%; margin: 0 auto; display: flex; justify-content: space-between; flex-wrap: wrap; padding: 0 0px; gap: 40px; }
+.footer-column { flex: 1; min-width: 250px; }
+.footer-logo { width: 150px; margin-bottom: 20px; }
+.footer-column h4 { margin-bottom: 20px; font-size: 18px; color: #333; }
+.footer-column ul { list-style: none; }
+.footer-column li { margin-bottom: 10px; }
+.footer-column a { text-decoration: none; color: #666; font-size: 15px; }
+.map-container { margin-top: 15px; border-radius: 8px; overflow: hidden; }
 </style>
