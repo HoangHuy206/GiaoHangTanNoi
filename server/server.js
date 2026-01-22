@@ -4,6 +4,8 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import OpenAI from 'openai'; 
 import 'dotenv/config'; 
+import { createServer } from 'http'; 
+import { Server } from 'socket.io';
 
 // --- KIỂM TRA KEY ---
 console.log("Kiểm tra API", process.env.GROQ_API_KEY ? "Đã nhận API ✅" : "Chưa thấy API ❌");
@@ -14,12 +16,21 @@ const groqClient = new OpenAI({
 });
 
 const app = express();
+const httpServer = createServer(app); // Tạo HTTP Server bọc lấy Express
 
 const PORT = process.env.PORT || 3000;
 const FRONTEND_ORIGINS = (process.env.FRONTEND_ORIGINS || 'http://localhost:5173')
   .split(',')
   .map(s => s.trim())
   .filter(Boolean);
+
+// CẤU HÌNH SOCKET.IO
+const io = new Server(httpServer, {
+    cors: { 
+        origin: FRONTEND_ORIGINS, 
+        methods: ["GET", "POST"] 
+    }
+});
 
 // --- CẤU HÌNH DB ---
 const pool = mysql.createPool({
@@ -40,7 +51,70 @@ app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
 
 // ==================================================================
-// PHẦN 1: CÁC API HỆ THỐNG (Auth, User, Favorite)
+// PHẦN 1: SOCKET.IO - REALTIME (TÀI XẾ & KHÁCH)
+// ==================================================================
+io.on('connection', (socket) => {
+    console.log('⚡ Có người kết nối Socket:', socket.id);
+
+    // 1. Tài xế online sẽ join vào phòng "drivers_room"
+    socket.on('driver_connect', () => {
+        socket.join('drivers_room');
+        console.log('🛵 Tài xế đã vào phòng chờ đơn');
+    });
+
+    // 2. Khách hàng đặt đơn (Sau khi lưu API thành công)
+    socket.on('place_order', (orderData) => {
+        console.log('📦 Có đơn hàng mới:', orderData.ma_don_hang);
+        // Gửi thông báo tới TẤT CẢ tài xế
+        io.to('drivers_room').emit('new_order_available', orderData);
+        // Khách join vào phòng riêng của đơn hàng này để nghe tin tức
+        socket.join(`order_${orderData.ma_don_hang}`); 
+    });
+
+    // 3. Tài xế nhận đơn (Đã thêm logic lưu DB)
+    socket.on('driver_accept_order', async (data) => {
+        console.log(`✅ Tài xế nhận đơn ${data.ma_don_hang}`);
+        
+        try {
+            // [QUAN TRỌNG] Cập nhật Database: Chuyển trạng thái sang 'dang_giao'
+            // ID tài xế tạm thời để là 1 (hoặc lấy từ data gửi lên nếu có)
+            const updateSql = "UPDATE don_hang SET trang_thai = 'dang_giao', id_tai_xe = ? WHERE ma_don_hang = ?";
+            await poolP.query(updateSql, [1, data.ma_don_hang]);
+            console.log("   -> Đã cập nhật trạng thái đơn trong DB");
+        } catch (err) {
+            console.error("   -> Lỗi cập nhật DB:", err);
+        }
+
+        // Báo cho người dùng biết
+        io.to(`order_${data.ma_don_hang}`).emit('order_status_update', {
+            status: 'confirmed',
+            driver_info: data.thong_tin_tai_xe,
+            location: data.vi_tri_tai_xe
+        });
+    });
+
+    // 4. Cập nhật vị trí tài xế (Real-time tracking)
+    socket.on('update_location', (data) => {
+        // data gồm: ma_don_hang, lat, lng
+        io.to(`order_${data.ma_don_hang}`).emit('driver_moved', {
+            lat: data.lat,
+            lng: data.lng
+        });
+    });
+
+    // 5. Khách hàng vào trang theo dõi đơn (Reconnect)
+    socket.on('khach_vao_theo_doi', (maDonHang) => {
+        console.log(`👀 Khách đang theo dõi đơn: ${maDonHang}`);
+        socket.join(`order_${maDonHang}`); 
+    });
+
+    socket.on('disconnect', () => {
+        console.log('❌ User disconnected:', socket.id);
+    });
+});
+
+// ==================================================================
+// PHẦN 2: CÁC API HỆ THỐNG
 // ==================================================================
 
 // 1. Đăng ký
@@ -77,7 +151,38 @@ app.post('/login', (req, res) => {
   });
 });
 
-// 3. Cập nhật Avatar
+// API 3: TẠO ĐƠN HÀNG
+app.post('/api/orders', (req, res) => {
+    const { 
+        ma_don_hang, tai_khoan_khach, ten_khach_hang, 
+        ten_mon_an, tong_tien, ten_quan, 
+        dia_chi_quan, dia_chi_giao, vi_do_giao, kinh_do_giao 
+    } = req.body;
+
+    const sql = `INSERT INTO don_hang 
+    (ma_don_hang, tai_khoan_khach, ten_khach_hang, ten_mon_an, tong_tien, ten_quan, dia_chi_quan, dia_chi_giao, vi_do_giao, kinh_do_giao, trang_thai, ngay_tao) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'cho_xu_ly', NOW())`;
+
+    pool.query(sql, [ma_don_hang, tai_khoan_khach, ten_khach_hang, ten_mon_an, tong_tien, ten_quan, dia_chi_quan, dia_chi_giao, vi_do_giao, kinh_do_giao], (err, result) => {
+        if (err) {
+            console.error("Lỗi tạo đơn:", err);
+            return res.status(500).json({ message: "Lỗi tạo đơn hàng" });
+        }
+        return res.json({ message: "Đặt hàng thành công", orderId: ma_don_hang });
+    });
+});
+
+// API 4: LẤY DANH SÁCH ĐƠN CHỜ (Cho tài xế)
+app.get('/api/orders', (req, res) => {
+    // Chỉ lấy đơn đang 'cho_xu_ly'
+    const sql = "SELECT * FROM don_hang WHERE trang_thai = 'cho_xu_ly' ORDER BY ngay_tao DESC";
+    pool.query(sql, (err, data) => {
+        if (err) return res.status(500).json(err);
+        return res.json(data);
+    });
+});
+
+// API Update Avatar
 app.post('/api/update-avatar', async (req, res) => {
   try {
     const { account_id, avatar_data } = req.body;
@@ -86,31 +191,21 @@ app.post('/api/update-avatar', async (req, res) => {
   } catch (err) { return res.status(500).json({ status: 'error', message: 'Lỗi server' }); }
 });
 
-// ------------------------------------------------------------------
-// [MỚI] TÍNH NĂNG YÊU THÍCH / THẢ TIM (Đã thêm vào đây)
-// ------------------------------------------------------------------
-
-// API 1: Bấm Tim (Tự động Thêm hoặc Xóa)
+// API Yêu thích
 app.post('/api/like', (req, res) => {
     const { maNguoiDung, maQuan } = req.body;
-
-    // Kiểm tra xem đã like chưa
     const sqlCheck = "SELECT * FROM YeuThichMonAn WHERE MaNguoiDung = ? AND MaQuan = ?";
-    
     pool.query(sqlCheck, [maNguoiDung, maQuan], (err, result) => {
         if (err) return res.status(500).json(err);
-
         if (result.length > 0) {
-            // Nếu có rồi -> XÓA (Bỏ like)
             const sqlDelete = "DELETE FROM YeuThichMonAn WHERE MaNguoiDung = ? AND MaQuan = ?";
-            pool.query(sqlDelete, [maNguoiDung, maQuan], (err, data) => {
+            pool.query(sqlDelete, [maNguoiDung, maQuan], (err) => {
                 if (err) return res.status(500).json(err);
                 return res.json({ message: "Đã bỏ yêu thích", status: false });
             });
         } else {
-            // Nếu chưa có -> THÊM MỚI (Like)
             const sqlInsert = "INSERT INTO YeuThichMonAn (MaNguoiDung, MaQuan) VALUES (?, ?)";
-            pool.query(sqlInsert, [maNguoiDung, maQuan], (err, data) => {
+            pool.query(sqlInsert, [maNguoiDung, maQuan], (err) => {
                 if (err) return res.status(500).json(err);
                 return res.json({ message: "Đã thêm yêu thích", status: true });
             });
@@ -118,28 +213,17 @@ app.post('/api/like', (req, res) => {
     });
 });
 
-// API 2: Lấy danh sách yêu thích của User
 app.get('/api/like/:userId', (req, res) => {
     const userId = req.params.userId;
-
-    // ✅ Đã sửa thành bảng QuanAn
-    const sql = `
-        SELECT Q.* FROM QuanAn Q 
-        JOIN YeuThichMonAn YT ON Q.MaQuan = YT.MaQuan 
-        WHERE YT.MaNguoiDung = ?
-        ORDER BY YT.NgayThem DESC
-    `;
-
+    const sql = `SELECT Q.* FROM QuanAn Q JOIN YeuThichMonAn YT ON Q.MaQuan = YT.MaQuan WHERE YT.MaNguoiDung = ? ORDER BY YT.NgayThem DESC`;
     pool.query(sql, [userId], (err, data) => {
         if (err) return res.status(500).json(err);
         return res.json(data);
     });
 });
 
-// API 3: Kiểm tra trạng thái 1 món (để tô đỏ tim)
 app.get('/api/check-like', (req, res) => {
     const { userId, foodId } = req.query;
-    
     const sql = "SELECT * FROM YeuThichMonAn WHERE MaNguoiDung = ? AND MaQuan = ?";
     pool.query(sql, [userId, foodId], (err, data) => {
         if (err) return res.status(500).json(err);
@@ -149,20 +233,19 @@ app.get('/api/check-like', (req, res) => {
 
 
 // ==================================================================
-// PHẦN 2: LOGIC AI THÔNG MINH (CHÀO TÊN + TÌM ĐƠN CỦA TÔI)
+// PHẦN 3: LOGIC AI THÔNG MINH
 // ==================================================================
 
-// Tool 1: Tra cứu theo MÃ ĐƠN (Ví dụ: S123)
+// Tool 1: Tra cứu theo MÃ ĐƠN
 async function traCuuDonHangDB(maDon) {
     try {
-        const [rows] = await poolP.query(`SELECT * FROM orders WHERE order_code = ? LIMIT 1`, [maDon]);
+        const [rows] = await poolP.query(`SELECT * FROM don_hang WHERE ma_don_hang = ? LIMIT 1`, [maDon]);
         if (rows.length > 0) {
             let donHang = rows[0];
-            // Thông tin liên hệ giả lập
-            donHang.shop_contact_info = {
+            donHang.thong_tin_lien_he = {
                 phone: "0909.123.456",
-                email: `lienhe@${donHang.shop_name ? donHang.shop_name.replace(/\s/g, '').toLowerCase() : 'quan'}.com`,
-                address: donHang.pickup_address || "Địa chỉ quán chưa cập nhật"
+                email: "hotro@giaohangtannoi.com",
+                dia_chi: donHang.dia_chi_quan || "Địa chỉ quán chưa cập nhật"
             };
             return JSON.stringify(donHang);
         }
@@ -170,11 +253,11 @@ async function traCuuDonHangDB(maDon) {
     } catch (e) { return JSON.stringify({ error: e.message }); }
 }
 
-// Tool 2: Lấy danh sách đơn của USERNAME đang chat
+// Tool 2: Lấy danh sách đơn của USERNAME
 async function layDonCuaUser(username) {
     console.log(`🔍 Đang tìm đơn hàng của user: ${username}`);
     try {
-        const sql = `SELECT order_code, food_name, total_price, status, shipper_name FROM orders WHERE username = ?`;
+        const sql = `SELECT ma_don_hang, ten_mon_an, tong_tien, trang_thai FROM don_hang WHERE tai_khoan_khach = ?`;
         const [rows] = await poolP.query(sql, [username]);
 
         if (rows.length > 0) {
@@ -189,7 +272,6 @@ async function layDonCuaUser(username) {
     } catch (e) { return JSON.stringify({ error: e.message }); }
 }
 
-// Định nghĩa Tools
 const tools = [
     {
         type: "function",
@@ -219,14 +301,10 @@ const tools = [
     },
 ];
 
-// API Chat endpoint
 app.post('/api/chat', async (req, res) => {
     const { message, history, currentUser } = req.body;
-
     try {
-        // --- SYSTEM PROMPT ---
         let systemContent = "Bạn là trợ lý ảo Giao Hàng. ";
-        
         if (currentUser && currentUser.fullname) {
             systemContent += `Bạn đang chat với khách hàng tên là "${currentUser.fullname}" (username: ${currentUser.username}). 
             - Hãy chào họ bằng tên thật thân thiện.
@@ -242,7 +320,6 @@ app.post('/api/chat', async (req, res) => {
             { role: "user", content: message }
         ];
 
-        // Gọi Groq lần 1
         const completion = await groqClient.chat.completions.create({
             model: "llama-3.3-70b-versatile",
             messages: messages,
@@ -252,7 +329,6 @@ app.post('/api/chat', async (req, res) => {
 
         const responseMessage = completion.choices[0].message;
 
-        // Xử lý gọi Tool
         if (responseMessage.tool_calls) {
             const toolCall = responseMessage.tool_calls[0];
             const args = JSON.parse(toolCall.function.arguments);
@@ -273,7 +349,6 @@ app.post('/api/chat', async (req, res) => {
             });
             return res.json({ reply: secondResponse.choices[0].message.content });
         }
-
         res.json({ reply: responseMessage.content });
 
     } catch (error) {
@@ -282,6 +357,7 @@ app.post('/api/chat', async (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`🚀 Server đang chạy tại http://localhost:${PORT}`);
+  console.log(`🔌 Socket.io đã sẵn sàng!`);
 });
