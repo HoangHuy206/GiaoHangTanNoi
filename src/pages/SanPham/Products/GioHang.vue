@@ -18,18 +18,23 @@
           </div>
 
           <div v-else class="cart-items-container">
-            <div class="select-all-container" style="padding: 10px 20px; border-bottom: 1px solid #eee;">
-               <label style="display: flex; align-items: center; cursor: pointer;">
-                 <input type="checkbox" v-model="isSelectAll" @change="toggleSelectAll" style="margin-right: 10px; transform: scale(1.3);">
-                 <span style="font-weight: 600;">Chọn tất cả ({{ cartItems.length }})</span>
+            
+            <div class="select-all-bar">
+               <label class="select-all-label">
+                 <input type="checkbox" v-model="isSelectAll" @change="toggleSelectAll" class="custom-checkbox">
+                 <span>Tất cả ({{ cartItems.length }})</span>
                </label>
+               
+               <button v-if="selectedCount > 0" class="delete-selected-btn" @click="removeSelected">
+                 Xóa ({{ selectedCount }})
+               </button>
             </div>
 
             <div class="cart-items-list">
               <div v-for="(item, index) in cartItems" :key="index" class="cart-item">
                 
                 <div class="item-checkbox">
-                  <input type="checkbox" v-model="item.selected" style="transform: scale(1.3); cursor: pointer;">
+                  <input type="checkbox" v-model="item.selected" class="custom-checkbox">
                 </div>
 
                 <div class="item-quantity-control">
@@ -43,9 +48,13 @@
                   <span class="item-note" v-if="item.note">{{ item.note }}</span>
                 </div>
 
-                <div class="item-price">
-                  {{ formatCurrency(item.price * item.quantity) }}
+                <div class="item-actions">
+                  <div class="item-price">{{ formatCurrency(item.price * item.quantity) }}</div>
+                  <button class="delete-item-btn" @click="removeItem(index)" title="Xóa món này">
+                    🗑️
+                  </button>
                 </div>
+
               </div>
             </div>
 
@@ -144,7 +153,24 @@ export default {
     const increaseQty = (index) => cartItems.value[index].quantity++;
     const decreaseQty = (index) => {
       if (cartItems.value[index].quantity > 1) cartItems.value[index].quantity--;
-      else if (confirm("Xóa món này?")) cartItems.value.splice(index, 1);
+      else removeItem(index); // Nếu giảm về 0 thì hỏi xóa
+    };
+
+    // --- CHỨC NĂNG XÓA MỚI ---
+    
+    // 1. Xóa từng món (Icon thùng rác)
+    const removeItem = (index) => {
+      if (confirm("Bạn muốn xóa món này khỏi giỏ?")) {
+        cartItems.value.splice(index, 1);
+      }
+    };
+
+    // 2. Xóa các món đã chọn (Nút Xóa trên thanh header)
+    const removeSelected = () => {
+      if (confirm(`Bạn chắc chắn muốn xóa ${selectedCount.value} món đang chọn?`)) {
+        // Giữ lại những món KHÔNG được chọn (selected = false)
+        cartItems.value = cartItems.value.filter(item => !item.selected);
+      }
     };
 
     const openCart = () => isVisible.value = true;
@@ -158,11 +184,7 @@ export default {
       router.push('/thanhtoan');
     };
 
-    // --- SỬA LỖI TRÙNG ID TẠI ĐÂY ---
     cartBus.on('add-to-cart', (product) => {
-      // Logic cũ (SAI): const existingItem = cartItems.value.find(item => item.id === product.id);
-      
-      // Logic MỚI (ĐÚNG): Kiểm tra cả ID và Tên món
       const existingItem = cartItems.value.find(item => item.id === product.id && item.name === product.name);
       
       if (existingItem) {
@@ -178,18 +200,43 @@ export default {
 
     return {
       isVisible, cartItems, totalItems, subTotal, selectedCount,
-      formatCurrency, increaseQty, decreaseQty, closeCart, goToCheckout,
-      isSelectAll, toggleSelectAll
+      formatCurrency, increaseQty, decreaseQty, removeItem, removeSelected, 
+      closeCart, goToCheckout, isSelectAll, toggleSelectAll
     };
   }
 };
 </script>
 
 <style scoped>
-/* Thêm style cho checkbox */
-.item-checkbox { display: flex; align-items: center; margin-right: 15px; }
+/* CSS CHO CHECKBOX VÀ NÚT XÓA */
+.select-all-bar {
+  padding: 10px 20px; border-bottom: 1px solid #eee;
+  display: flex; justify-content: space-between; align-items: center;
+  background: #fdfdfd;
+}
+.select-all-label {
+  display: flex; align-items: center; cursor: pointer; font-weight: 600; font-size: 14px;
+}
+.custom-checkbox {
+  width: 18px; height: 18px; margin-right: 8px; cursor: pointer; accent-color: #00b140;
+}
+.delete-selected-btn {
+  background: none; border: none; color: #ff4757; font-weight: 600; font-size: 13px; cursor: pointer;
+}
+.delete-selected-btn:hover { text-decoration: underline; }
 
-/* Các style cũ giữ nguyên */
+/* CSS ITEM */
+.item-checkbox { margin-right: 12px; display: flex; align-items: center; }
+.item-actions {
+  display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between;
+  height: 100%; min-height: 40px;
+}
+.delete-item-btn {
+  background: none; border: none; font-size: 16px; cursor: pointer; margin-top: 5px; opacity: 0.7;
+}
+.delete-item-btn:hover { opacity: 1; transform: scale(1.1); transition: 0.2s; }
+
+/* CÁC CSS CŨ GIỮ NGUYÊN */
 .cart-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 9999; display: flex; justify-content: flex-end; }
 .cart-container { width: 400px; max-width: 85%; height: 100%; background-color: #fff; display: flex; flex-direction: column; box-shadow: -5px 0 15px rgba(0,0,0,0.1); }
 .cart-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background-color: white; }
@@ -200,7 +247,7 @@ export default {
 .empty-cart-img { width: 120px; margin-bottom: 20px; height: auto; object-fit: contain; }
 .browse-btn { margin-top: 15px; padding: 10px 24px; border: 1px solid #00b140; color: #fff; border-radius: 4px; font-weight: bold; cursor: pointer; background-color: #00b14f; transition: 0.2s; }
 .cart-items-container { padding: 0; }
-.cart-item { display: flex; align-items: center; padding: 15px 20px; border-bottom: 1px solid #f0f0f0; } /* Đã sửa align-items thành center */
+.cart-item { display: flex; align-items: center; padding: 15px 20px; border-bottom: 1px solid #f0f0f0; }
 .item-quantity-control { display: flex; align-items: center; border: 1px solid #ddd; border-radius: 4px; margin-right: 15px; height: 32px; }
 .qty-btn { background: none; border: none; width: 25px; height: 100%; cursor: pointer; font-size: 16px; color: #00b140; }
 .qty-number { font-size: 14px; font-weight: 600; padding: 0 5px; }
