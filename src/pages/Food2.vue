@@ -296,7 +296,7 @@ const filteredRestaurants = computed(() => {
       </transition>
       
       <div class="ai-button" @click="toggleChat" :class="{ 'is-active': isChatOpen }">
-        <img src="../assets/anh.logo/anh-AI.png" alt="AI Assistant" style="width: auto; height: 56px;">
+        <img src="../assets/anh.logo/AII.png" alt="AI Assistant" style="width: auto; height: 56px;">
       </div>
 
       <transition name="slide-up">

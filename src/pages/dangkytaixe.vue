@@ -1,7 +1,9 @@
 <template>
   <div class="register-page">
     <div class="design-container">
-      
+      <router-link to="../assets/icon/icon/themify-icons-font/themify-icons-font/themify-icons/themify-icons.css">
+        
+      </router-link>
       <img src="../assets/anh.logo/anhchophandangkytaixe.jpg" alt="Background" class="bg-image">
 
       <div class="form-card">
@@ -146,88 +148,146 @@ import emailjs from '@emailjs/browser';
 
 const router = useRouter();
 
-// --- CẤU HÌNH EMAILJS (KEY CHUẨN CỦA BẠN) ---
-const SERVICE_ID = 'service_x72kuxn'; 
+// --- CẤU HÌNH EMAILJS ---
+const SERVICE_ID = 'service_x72kuxn';
 const TEMPLATE_ID = 'template_qm7y8o2';
-const PUBLIC_KEY = 'OQJryL3gJ2al-goTB'; 
+const PUBLIC_KEY = 'OQJryL3gJ2al-goTB';
 
-// --- KHAI BÁO BIẾN DỮ LIỆU ---
-const username = ref(''); // Username đăng nhập
-const password = ref(''); // Mật khẩu
+// --- STATE ---
+const username = ref('');
+const password = ref('');
 const fullName = ref('');
 const email = ref('');
 const phone = ref('');
 const cccd = ref('');
-const gender = ref('Nam'); 
+const gender = ref('Nam');
 const address = ref('');
 const vehicle = ref('');
 const isLoading = ref(false);
 
-// Hàm chỉ cho phép nhập số (dùng cho SĐT và CCCD)
+// Chỉ cho phép nhập số
 const restrictInputToNumbers = (event) => {
-  const value = event.target.value.replace(/[^0-9]/g, '');
+  const value = (event.target.value || '').replace(/[^0-9]/g, '');
   event.target.value = value;
-  
-  // Cập nhật lại giá trị cho biến tương ứng
   if (event.target.id === 'phone') phone.value = value;
   if (event.target.id === 'cccd') cccd.value = value;
 };
 
-// --- HÀM XỬ LÝ KHI BẤM NÚT ĐĂNG KÝ ---
+// Helper trim
+const clean = (v) => (v ?? '').toString().trim();
+
+// Helper đọc lỗi response (backend có thể trả JSON hoặc text)
+const readErrorMessage = async (res) => {
+  const ct = res.headers.get('content-type') || '';
+  try {
+    if (ct.includes('application/json')) {
+      const data = await res.json();
+      return data?.message || data?.error || JSON.stringify(data);
+    }
+    const text = await res.text();
+    return text || `HTTP ${res.status}`;
+  } catch {
+    return `HTTP ${res.status}`;
+  }
+};
+
 const handleRegister = async () => {
+  if (isLoading.value) return;
   isLoading.value = true;
 
   try {
-    // BƯỚC 1: Gửi TẤT CẢ dữ liệu xuống Server (bao gồm cả username/pass)
-    // Server sẽ tự động lưu vào 2 bảng: accounts và Dang_ky_tai_xe
-    const response = await fetch('http://localhost:3000/api/register-driver', { 
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        username: username.value, // Quan trọng: Gửi username
-        password: password.value, // Quan trọng: Gửi password
-        fullName: fullName.value,
-        email: email.value,
-        phone: phone.value,
-        cccd: cccd.value,
-        gender: gender.value,
-        address: address.value,
-        vehicle: vehicle.value
-      })
-    });
+    // --- validate frontend (tránh gửi chuỗi rỗng / toàn dấu cách) ---
+    const u = clean(username.value);
+    const p = clean(password.value);
+    const n = clean(fullName.value);
+    const em = clean(email.value);
+    const ph = clean(phone.value);
+    const id = clean(cccd.value);
+    const addr = clean(address.value);
+    const ve = clean(vehicle.value);
 
-    // Nếu Server trả về lỗi (ví dụ: Tên đăng nhập đã tồn tại)
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Lỗi lưu database');
+    if (!u || !p || !n) {
+      alert('Vui lòng nhập đủ Tên đăng nhập, Mật khẩu và Họ tên.');
+      return;
+    }
+    if (!em) {
+      alert('Vui lòng nhập Email.');
+      return;
+    }
+    if (ph.length !== 10) {
+      alert('Số điện thoại phải đúng 10 chữ số.');
+      return;
+    }
+    if (id.length !== 12) {
+      alert('CCCD phải đúng 12 chữ số.');
+      return;
+    }
+    if (!addr || !ve) {
+      alert('Vui lòng nhập Nơi ở và Phương tiện.');
+      return;
     }
 
-    // BƯỚC 2: Gửi Email xác nhận qua EmailJS
+    // --- payload gửi lên backend ---
+    const driverData = {
+      tenDangNhap: u,
+      matKhau: p,
+      hoTen: n,
+      email: em,
+      sdt: ph,
+      cccd: id,
+      gioiTinh: gender.value, // "Nam"/"Nữ"
+      diaChi: addr,
+      phuongTien: ve
+    };
+
+    console.log('Dữ liệu đang gửi đi (Final):', driverData);
+
+    const response = await fetch('http://localhost:3000/api/register-driver', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(driverData)
+    });
+
+    if (!response.ok) {
+      const msg = await readErrorMessage(response);
+      throw new Error(msg || 'Lỗi đăng ký');
+    }
+
+    // --- gửi email sau khi đăng ký OK ---
     const templateParams = {
-      to_name: fullName.value,
-      to_email: email.value,
-      // Nội dung email sẽ hiện cả username để tài xế nhớ
-      message: `Tài khoản mới: ${username.value} - Role: Tài xế - Xe: ${vehicle.value}`,
+      to_name: n,
+      to_email: em,
+      message: `Tài khoản mới: ${u} - Role: Tài xế - Xe: ${ve}`,
       user_role: 'Tài xế'
     };
 
-    console.log("Đang gửi mail...");
-    await emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams, PUBLIC_KEY);
-    
-    alert("Đăng ký thành công! Bạn có thể đăng nhập ngay.");
-    router.push('/login'); // Chuyển hướng sang trang đăng nhập
+    emailjs
+      .send(SERVICE_ID, TEMPLATE_ID, templateParams, PUBLIC_KEY)
+      .then(() => console.log('Gửi mail thành công'))
+      .catch((err) => console.error('Lỗi gửi mail:', err));
 
+    alert('Đăng ký thành công! Bạn có thể đăng nhập ngay.');
+    router.push('/login');
   } catch (error) {
-    console.error("Lỗi quy trình đăng ký:", error);
-    alert("Đăng ký thất bại: " + error.message);
+    console.error('Lỗi quy trình đăng ký:', error);
+
+    // Lỗi mạng/CORS thường là TypeError: Failed to fetch
+    const msg = (error?.message || '').includes('Failed to fetch')
+      ? 'Không kết nối được server (kiểm tra backend chạy chưa / CORS / đúng port 3000).'
+      : error.message;
+
+    alert('Đăng ký thất bại: ' + msg);
   } finally {
     isLoading.value = false;
   }
 };
 </script>
 
+
 <style scoped>
-/* Giữ nguyên CSS cũ của bạn */
 :global(body) { margin: 0; padding: 0; overflow: hidden; }
 
 .register-page {

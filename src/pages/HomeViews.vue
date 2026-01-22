@@ -161,10 +161,12 @@ watch(isMenuOpen, (open) => {
           <div class="right-column">
             <div class="service-item">
               <div class="icon-box"><img src="@/assets/anh.logo/anhnen.png" alt="Driver"></div>
+              <router-link  to="/theo-doi/:maDon">
               <div class="text-box">
                 <h3>Đăng ký lái xe</h3>
                 <p>Trở thành đối tác để gia tăng thu nhập ngay hôm nay.</p>
               </div>
+            </router-link>
             </div>
           </div>
         </div>

@@ -72,7 +72,6 @@
             </div>
             
             <div v-if="paymentMethod === 'banking'" class="qr-container">
-              
               <div v-if="paymentStatus === 'pending'" class="qr-pending">
                 <div class="qr-header">
                    Quét mã để thanh toán 
@@ -80,22 +79,19 @@
                 </div>
                 <div class="qr-body">
                    <img :src="qrCodeUrl" alt="QR Code" class="qr-img" />
-                   
                    <div class="qr-details">
                       <p class="qr-note">Tổng tiền: <strong class="price-highlight">{{ formatCurrency(finalTotal) }}</strong></p>
                       <p class="qr-note">Nội dung CK: <strong class="code-highlight">{{ randomOrderCode }}</strong></p>
                    </div>
-
                    <button class="confirm-paid-btn" @click="handleConfirmPaid">
                      ✅ Tôi đã chuyển khoản xong
                    </button>
-
                    <button class="refresh-qr" @click="generateNewQR">🔄 Lấy mã mới</button>
-
+                   
                    <div class="dev-tools">
                       <p class="dev-title">⚠️ Công cụ Test (Dành cho Dev)</p>
                       <button @click="toggleSimulateBank" :class="{'active': isMoneyReceived}">
-                         {{ isMoneyReceived ? 'TRẠNG THÁI: ĐÃ NHẬN TIỀN (ON)' : 'TRẠNG THÁI: CHƯA NHẬN TIỀN (OFF)' }}
+                          {{ isMoneyReceived ? 'TRẠNG THÁI: ĐÃ NHẬN TIỀN (ON)' : 'TRẠNG THÁI: CHƯA NHẬN TIỀN (OFF)' }}
                       </button>
                       <p class="dev-hint">*Bấm vào nút trên để bật chế độ "Đã nhận tiền" thì mới thanh toán thành công được.</p>
                    </div>
@@ -114,7 +110,6 @@
                  <h3>Thanh toán thành công!</h3>
                  <p>Đơn hàng đã được xác nhận.</p>
               </div>
-
             </div>
           </div>
         </div>
@@ -160,7 +155,6 @@
 <script>
 import { ref, computed, onMounted, reactive, onUnmounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
-// --- 1. IMPORT THƯ VIỆN KẾT NỐI ---
 import axios from 'axios';
 import { io } from 'socket.io-client';
 
@@ -169,27 +163,35 @@ export default {
   setup() {
     const router = useRouter();
     
-    // --- KẾT NỐI SOCKET ---
-    const socket = io('http://localhost:3000'); // Port Node.js của bạn
+    // [QUAN TRỌNG] Thay đổi IP này thành IP LAN của máy tính bạn (VD: 192.168.1.5)
+    // Nếu để localhost thì điện thoại sẽ không kết nối được
+    const SERVER_IP = 'http://192.168.0.153:3000'; 
+    const socket = io(SERVER_IP); 
+
+    // [QUAN TRỌNG] Thông tin Quán (Điểm lấy hàng) - CỐ ĐỊNH
+    const SHOP_INFO = {
+        name: 'Cơm Gà 68',
+        address: '123 Đường Láng, Đống Đa, Hà Nội',
+        lat: 21.0076, // Tọa độ quán (Ví dụ ở Đường Láng)
+        lng: 105.8159 
+    };
 
     const items = ref([]);
     const selectedShip = ref('fast');
     const paymentMethod = ref('cash');
     const showMapModal = ref(false);
     const tempSelectedAddress = ref('');
-    const dangXuLy = ref(false); // Trạng thái đang gửi đơn
+    const dangXuLy = ref(false);
     
-    // --- LƯU TỌA ĐỘ (Quan trọng để vẽ đường) ---
-    const selectedCoords = ref({ lat: 21.0285, lng: 105.8542 }); // Mặc định Hà Nội
+    // Tọa độ mặc định người nhận (Hà Nội)
+    const selectedCoords = ref({ lat: 21.0285, lng: 105.8542 }); 
     
     let mapInstance = null;
     let markerInstance = null;
     
-    // --- CẤU HÌNH NGÂN HÀNG ---
     const bankId = 'MB'; 
     const accountNo = '0396222614'; 
 
-    // --- State thanh toán ---
     const randomOrderCode = ref('');
     const qrTimeLeft = ref(600); 
     let timerInterval = null;
@@ -217,7 +219,7 @@ export default {
         userInfo.name = u.fullname || u.HoTen || 'Khách hàng';
         userInfo.phone = u.phone || '';
         userInfo.username = u.username || 'guest';
-        if(u.address) userInfo.address = u.address;
+        if(u.address) userInfo.address = u.address; // Lấy địa chỉ lưu sẵn
       }
     });
 
@@ -273,10 +275,9 @@ export default {
       return `${m}:${s}`;
     };
 
-    // --- XỬ LÝ BẢN ĐỒ & TỌA ĐỘ ---
+    // --- MAP LOGIC ---
     const setHardLocation = () => { 
       userInfo.address = "Trường Cao Đẳng Công Nghệ Cao Hà Nội"; 
-      // Set tọa độ cứng của trường (Để vẽ map)
       selectedCoords.value = { lat: 21.0464, lng: 105.7480 }; 
       alert("Đã chọn vị trí: Trường Cao Đẳng Công Nghệ Cao Hà Nội"); 
     };
@@ -288,7 +289,6 @@ export default {
       if (typeof L === 'undefined') { alert("Đang tải bản đồ..."); return; }
       if (mapInstance) mapInstance.remove();
       
-      // Dùng tọa độ hiện tại hoặc mặc định
       const currentLat = selectedCoords.value.lat;
       const currentLng = selectedCoords.value.lng;
 
@@ -302,7 +302,6 @@ export default {
 
     const updateMarkerAndAddress = async (lat, lng) => {
       markerInstance.setLatLng([lat, lng]);
-      // Lưu lại tọa độ để gửi database
       selectedCoords.value = { lat, lng };
       
       tempSelectedAddress.value = "Đang lấy địa chỉ...";
@@ -313,6 +312,7 @@ export default {
       } catch (error) { tempSelectedAddress.value = "Lỗi kết nối"; }
     };
 
+    // [SỬA] Khi xác nhận map, cập nhật userInfo.address luôn
     const confirmMapSelection = () => {
       if (tempSelectedAddress.value) { 
         userInfo.address = tempSelectedAddress.value; 
@@ -320,7 +320,7 @@ export default {
       }
     };
 
-    // --- HÀM GỬI ĐƠN HÀNG (QUAN TRỌNG NHẤT) ---
+    // --- HÀM GỬI ĐƠN HÀNG (ĐÃ SỬA) ---
     const submitOrder = async () => {
        if(items.value.length === 0) return alert("Giỏ hàng trống!");
        if(!userInfo.address) return alert("Vui lòng nhập địa chỉ!");
@@ -332,50 +332,51 @@ export default {
        dangXuLy.value = true;
 
        try {
-           // 1. Chuẩn bị dữ liệu chuẩn Database
            const maDonHang = randomOrderCode.value || ('DH' + Date.now());
+           
+           // [QUAN TRỌNG] Đóng gói dữ liệu gửi lên Server
            const orderData = {
                ma_don_hang: maDonHang,
                tai_khoan_khach: userInfo.username || 'guest',
                ten_khach_hang: userInfo.name,
                ten_mon_an: items.value.map(item => `${item.name} (${item.quantity})`).join(', '),
-               tong_tien: formatCurrency(finalTotal.value),
-               ten_quan: 'Cơm Gà 68', // Có thể lấy động nếu giỏ hàng hỗ trợ
-               dia_chi_quan: '123 Đường Láng',
-               dia_chi_giao: userInfo.address,
-               // Gửi Tọa Độ Lên Server
+               tong_tien: formatCurrency(finalTotal.value), // Hoặc gửi số nguyên: finalTotal.value
+               
+               // [FIX] Gửi thông tin Quán (Điểm lấy hàng)
+               ten_quan: SHOP_INFO.name, 
+               dia_chi_quan: SHOP_INFO.address,
+               lat_don: SHOP_INFO.lat, // Tọa độ quán (để vẽ đường)
+               lng_don: SHOP_INFO.lng,
+
+               // [FIX] Gửi thông tin Khách (Điểm giao hàng)
+               dia_chi_giao: userInfo.address, // Địa chỉ lấy từ ô nhập liệu
+               lat_tra: selectedCoords.value.lat, // Tọa độ khách
+               lng_tra: selectedCoords.value.lng,
+               
+               // Các trường cũ để tương thích (nếu backend dùng)
                vi_do_giao: selectedCoords.value.lat,
                kinh_do_giao: selectedCoords.value.lng
            };
 
-           // 2. Gửi API lưu Database
-           const res = await axios.post('http://localhost:3000/api/orders', orderData);
+           // 2. Gửi API lưu vào Database
+           const res = await axios.post(`${SERVER_IP}/api/orders`, orderData);
 
            if (res.status === 200) {
-               // 3. Gửi Socket cho Tài Xế
-               console.log("Bắn socket đi:", orderData);
+               // 3. Bắn Socket cho Tài xế
+               console.log("Đặt hàng thành công:", orderData);
                socket.emit('place_order', orderData);
 
-               // 4. Thông báo & Dọn dẹp
+               // 4. Xóa giỏ hàng & Chuyển hướng
                alert("Đặt hàng thành công! Đang tìm tài xế...");
-               
-               // Xóa giỏ hàng
                localStorage.removeItem('tempCart');
-               const savedCart = localStorage.getItem('myShoppingCart');
-               if(savedCart) {
-                   let cart = JSON.parse(savedCart);
-                   // Lọc bỏ món đã mua (logic đơn giản xóa hết cho demo)
-                   localStorage.removeItem('myShoppingCart');
-               }
-
-               // 5. Chuyển trang (ví dụ sang trang theo dõi đơn)
-               // router.push(`/tracking/${maDonHang}`);
-               router.push('/theo-doi/:maDon'); 
+               
+               // Chuyển sang trang Theo Dõi
+               router.push({ name: 'TheoDoiDonHang', params: { maDon: maDonHang } });
            }
 
        } catch (error) {
            console.error("Lỗi đặt hàng:", error);
-           alert("Lỗi hệ thống: " + (error.response?.data?.message || error.message));
+           alert("Lỗi kết nối Server: " + (error.message));
        } finally {
            dangXuLy.value = false;
        }
@@ -396,7 +397,7 @@ export default {
 </script>
 
 <style scoped>
-/* Giữ nguyên CSS cũ của bạn */
+/* CSS Giữ nguyên như cũ */
 .checkout-page-wrapper { background-color: #f0f2f5; min-height: 100vh; padding: 40px 20px; font-family: 'Segoe UI', sans-serif; }
 .checkout-container-desktop { max-width: 1100px; margin: 0 auto; }
 .checkout-header { margin-bottom: 20px; display: flex; align-items: center; }
