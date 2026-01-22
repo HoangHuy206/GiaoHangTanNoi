@@ -8,7 +8,7 @@ import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
 import { io } from 'socket.io-client';
 
 // ====== CẤU HÌNH ======
-const SOCKET_URL = 'http://192.168.0.153:3000'; // Đổi IP này nếu cần
+const SOCKET_URL = 'http://localhost:3000'; // Đổi IP này nếu cần
 const socket = io(SOCKET_URL); 
 
 const route = useRoute();
@@ -173,7 +173,7 @@ onUnmounted(() => { if (map) { map.remove(); map = null; } socket.disconnect(); 
 <template>
   <div class="tracking-page">
     <div class="header">
-        <button @click="router.push('/')" class="back-btn"><i class="ti-arrow-left"></i> Quay lại</button>
+        <button @click="router.push('/Food2')" class="back-btn"><i class="ti-arrow-left"></i> Quay lại</button>
         <h3>Đơn hàng: {{ maDonHang }}</h3>
     </div>
 
@@ -189,7 +189,7 @@ onUnmounted(() => { if (map) { map.remove(); map = null; } socket.disconnect(); 
                     <div class="stars">⭐⭐⭐⭐⭐</div>
                 </div>
             </div>
-            <button @click="router.push('/')" class="btn-home">Về trang chủ</button>
+            <button @click="router.push('/Food2')" class="btn-home">Về trang chủ</button>
         </div>
     </div>
 

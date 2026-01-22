@@ -6,7 +6,7 @@ import { io } from 'socket.io-client'
 
 // ====== CẤU HÌNH ======
 // Đổi thành IP LAN máy tính của bạn để test trên điện thoại (VD: 192.168.1.x)
-const SOCKET_URL = 'http://192.168.0.153:3000'; 
+const SOCKET_URL = 'http://localhost:3000'; 
 const socket = io(SOCKET_URL)
 
 // State
@@ -222,7 +222,7 @@ onUnmounted(() => { stopWatchLocation(); socket.disconnect(); })
         <li class="active"><i class="ti-home"></i> Trang chủ</li>
         <li><i class="ti-wallet"></i> Thu nhập</li>
         <li><i class="ti-email"></i> Hộp thư</li>
-        <li><i class="ti-user"></i> Hồ sơ</li>
+        <li><i class="ti-user"></i><a href="/thongtinlaixe"> Hồ sơ</a></li>
       </ul>
     </aside>
 

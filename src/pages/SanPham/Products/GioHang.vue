@@ -2,7 +2,7 @@
   <transition name="cart-slide">
     <div v-if="isVisible" class="cart-overlay" @click.self="closeCart">
       <div class="cart-container">
-        
+
         <div class="cart-header">
           <h2 class="cart-title" v-if="cartItems.length > 0">Giỏ hàng ({{ totalItems }} món)</h2>
           <h2 class="cart-title" v-else>Giỏ hàng</h2>
@@ -18,21 +18,21 @@
           </div>
 
           <div v-else class="cart-items-container">
-            
+
             <div class="select-all-bar">
-               <label class="select-all-label">
-                 <input type="checkbox" v-model="isSelectAll" @change="toggleSelectAll" class="custom-checkbox">
-                 <span>Tất cả ({{ cartItems.length }})</span>
-               </label>
-               
-               <button v-if="selectedCount > 0" class="delete-selected-btn" @click="removeSelected">
-                 Xóa ({{ selectedCount }})
-               </button>
+              <label class="select-all-label">
+                <input type="checkbox" v-model="isSelectAll" @change="toggleSelectAll" class="custom-checkbox">
+                <span>Tất cả ({{ cartItems.length }})</span>
+              </label>
+
+              <button v-if="selectedCount > 0" class="delete-selected-btn" @click="removeSelected">
+                Xóa ({{ selectedCount }})
+              </button>
             </div>
 
             <div class="cart-items-list">
               <div v-for="(item, index) in cartItems" :key="index" class="cart-item">
-                
+
                 <div class="item-checkbox">
                   <input type="checkbox" v-model="item.selected" class="custom-checkbox">
                 </div>
@@ -85,7 +85,7 @@
 
 <script>
 import { ref, computed, onMounted, watch } from 'vue';
-import { useRouter, useRoute } from 'vue-router'; 
+import { useRouter, useRoute } from 'vue-router';
 
 export const cartBus = {
   events: {},
@@ -101,35 +101,50 @@ export const cartBus = {
 export default {
   name: "GioHang",
   setup() {
+    const CART_KEY = 'myShoppingCart';
+    const TEMP_KEY = 'tempCart';
+
     const isVisible = ref(false);
     const cartItems = ref([]);
-    const router = useRouter(); 
+    const router = useRouter();
     const route = useRoute();
 
     const syncCart = () => {
-      const savedCart = localStorage.getItem('myShoppingCart');
+      const savedCart = localStorage.getItem(CART_KEY);
       if (savedCart) {
         try {
           let items = JSON.parse(savedCart);
           items = items.map(i => ({ ...i, selected: i.selected !== undefined ? i.selected : true }));
           cartItems.value = items;
-        } catch (e) { cartItems.value = []; }
+        } catch (e) {
+          cartItems.value = [];
+        }
       } else {
         cartItems.value = [];
+      }
+    };
+
+    const persistCart = () => {
+      // Lưu giỏ chính (cartItems) vào localStorage
+      if (cartItems.value.length > 0) {
+        localStorage.setItem(CART_KEY, JSON.stringify(cartItems.value));
+      } else {
+        localStorage.removeItem(CART_KEY);
       }
     };
 
     onMounted(() => syncCart());
     watch(() => route.path, () => syncCart());
 
-    watch(cartItems, (newVal) => {
-      if (newVal.length > 0) localStorage.setItem('myShoppingCart', JSON.stringify(newVal));
-      else localStorage.removeItem('myShoppingCart');
+    watch(cartItems, () => {
+      persistCart();
     }, { deep: true });
 
     // --- TÍNH TOÁN ---
-    const totalItems = computed(() => cartItems.value.reduce((total, item) => total + item.quantity, 0));
-    
+    const totalItems = computed(() =>
+      cartItems.value.reduce((total, item) => total + item.quantity, 0)
+    );
+
     const subTotal = computed(() => {
       return cartItems.value
         .filter(item => item.selected)
@@ -140,7 +155,7 @@ export default {
 
     const isSelectAll = computed({
       get: () => cartItems.value.length > 0 && cartItems.value.every(i => i.selected),
-      set: (val) => { /* Xử lý ở toggleSelectAll */ }
+      set: () => { /* xử lý ở toggleSelectAll */ }
     });
 
     const toggleSelectAll = (e) => {
@@ -148,27 +163,25 @@ export default {
       cartItems.value.forEach(item => item.selected = checked);
     };
 
-    const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
+    const formatCurrency = (val) =>
+      new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
 
     const increaseQty = (index) => cartItems.value[index].quantity++;
+
     const decreaseQty = (index) => {
       if (cartItems.value[index].quantity > 1) cartItems.value[index].quantity--;
-      else removeItem(index); // Nếu giảm về 0 thì hỏi xóa
+      else removeItem(index);
     };
 
-    // --- CHỨC NĂNG XÓA MỚI ---
-    
-    // 1. Xóa từng món (Icon thùng rác)
+    // --- XÓA ---
     const removeItem = (index) => {
       if (confirm("Bạn muốn xóa món này khỏi giỏ?")) {
         cartItems.value.splice(index, 1);
       }
     };
 
-    // 2. Xóa các món đã chọn (Nút Xóa trên thanh header)
     const removeSelected = () => {
       if (confirm(`Bạn chắc chắn muốn xóa ${selectedCount.value} món đang chọn?`)) {
-        // Giữ lại những món KHÔNG được chọn (selected = false)
         cartItems.value = cartItems.value.filter(item => !item.selected);
       }
     };
@@ -176,20 +189,33 @@ export default {
     const openCart = () => isVisible.value = true;
     const closeCart = () => isVisible.value = false;
 
+    // ✅ FIX CHÍNH: BẤM MUA HÀNG -> LƯU tempCart + XÓA CÁC MÓN ĐÃ CHỌN KHỎI GIỎ CHÍNH
     const goToCheckout = () => {
       const itemsToPay = cartItems.value.filter(item => item.selected);
       if (itemsToPay.length === 0) return alert("Vui lòng tích chọn món cần thanh toán!");
-      localStorage.setItem('tempCart', JSON.stringify(itemsToPay));
+
+      // 1) Lưu giỏ tạm để trang thanh toán dùng
+      localStorage.setItem(TEMP_KEY, JSON.stringify(itemsToPay));
+
+      // 2) XÓA các món đã chọn khỏi giỏ chính
+      cartItems.value = cartItems.value.filter(item => !item.selected);
+
+      // Nếu bạn muốn đặt xong là xóa sạch giỏ, dùng dòng này thay cho filter ở trên:
+      // cartItems.value = [];
+
+      // 3) Lưu lại giỏ mới
+      persistCart();
+
       closeCart();
       router.push('/thanhtoan');
     };
 
     cartBus.on('add-to-cart', (product) => {
       const existingItem = cartItems.value.find(item => item.id === product.id && item.name === product.name);
-      
+
       if (existingItem) {
         existingItem.quantity++;
-        existingItem.selected = true; 
+        existingItem.selected = true;
       } else {
         cartItems.value.push({ ...product, quantity: 1, selected: true });
       }
@@ -200,7 +226,7 @@ export default {
 
     return {
       isVisible, cartItems, totalItems, subTotal, selectedCount,
-      formatCurrency, increaseQty, decreaseQty, removeItem, removeSelected, 
+      formatCurrency, increaseQty, decreaseQty, removeItem, removeSelected,
       closeCart, goToCheckout, isSelectAll, toggleSelectAll
     };
   }

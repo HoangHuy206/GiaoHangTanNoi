@@ -61,79 +61,107 @@ const poolP = pool.promise();
 // PHẦN 1: API HỆ THỐNG (AUTH & USER)
 // ==================================================================
 
-// 1. Đăng ký USER
+// 1) Đăng ký USER
 app.post('/register', (req, res) => {
   const { fullname, username, password } = req.body;
   if (!username || !password || !fullname) return res.status(400).json({ message: "Thiếu thông tin" });
 
-  const checkSql = "SELECT * FROM accounts WHERE username = ?";
+  const checkSql = "SELECT 1 FROM accounts WHERE username = ? LIMIT 1";
   pool.query(checkSql, [username], (err, data) => {
     if (err) return res.status(500).json({ message: "Lỗi hệ thống" });
     if (data.length > 0) return res.status(409).json({ message: "Tên đăng nhập đã tồn tại!" });
 
     const insertSql = "INSERT INTO accounts (fullname, username, password, role, created_at) VALUES (?, ?, ?, 'user', NOW())";
-    pool.query(insertSql, [fullname, username, password], (err) => {
-      if (err) return res.status(500).json({ message: "Lỗi khi tạo tài khoản" });
+    pool.query(insertSql, [fullname, username, password], (err2) => {
+      if (err2) return res.status(500).json({ message: "Lỗi khi tạo tài khoản" });
       return res.status(200).json({ message: "Đăng ký thành công!" });
     });
   });
 });
 
-// 2. Đăng ký TÀI XẾ
-app.post('/api/register-driver', (req, res) => {
-  const tenDangNhap = (req.body.tenDangNhap || req.body.username || '').toString().trim();
-  const matKhau     = (req.body.matKhau || req.body.password || '').toString().trim();
-  const hoTen       = (req.body.hoTen || req.body.fullname || '').toString().trim();
-  const email    = (req.body.email || '').toString().trim();
-  const sdt      = (req.body.sdt || req.body.phone || '').toString().trim();
-  const cccd     = (req.body.cccd || '').toString().trim();
-  const gioiTinh = (req.body.gioiTinh || req.body.gender || 'Nam').toString().trim();
-  const diaChi   = (req.body.diaChi || req.body.address || '').toString().trim();
-  const phuongTien = (req.body.phuongTien || req.body.vehicle || '').toString().trim();
+// 2) Đăng ký TÀI XẾ (✅ DUYỆT THẲNG)
+app.post('/api/register-driver', async (req, res) => {
+  try {
+    const tenDangNhap = (req.body.tenDangNhap || req.body.username || '').toString().trim();
+    const matKhau     = (req.body.matKhau || req.body.password || '').toString().trim();
+    const hoTen       = (req.body.hoTen || req.body.fullname || '').toString().trim();
 
-  if (!tenDangNhap || !matKhau || !hoTen) {
-    return res.status(400).json({ message: "Vui lòng nhập đủ Tên đăng nhập, Mật khẩu và Họ tên." });
+    const email       = (req.body.email || '').toString().trim();
+    const sdt         = (req.body.sdt || req.body.phone || '').toString().trim();
+    const cccd        = (req.body.cccd || '').toString().trim();
+    const gioiTinh    = (req.body.gioiTinh || req.body.gender || 'Nam').toString().trim();
+    const diaChi      = (req.body.diaChi || req.body.address || '').toString().trim();
+    const phuongTien  = (req.body.phuongTien || req.body.vehicle || '').toString().trim();
+
+    if (!tenDangNhap || !matKhau || !hoTen) {
+      return res.status(400).json({ message: "Vui lòng nhập đủ Tên đăng nhập, Mật khẩu và Họ tên." });
+    }
+
+    // Check trùng accounts
+    const [acc] = await poolP.query(
+      "SELECT 1 FROM accounts WHERE username = ? LIMIT 1",
+      [tenDangNhap]
+    );
+    if (acc.length > 0) return res.status(409).json({ message: "Tên đăng nhập đã tồn tại!" });
+
+    // Check trùng hồ sơ tài xế
+    const [dr] = await poolP.query(
+      "SELECT 1 FROM Dang_ky_tai_xe WHERE ten_dang_nhap = ? LIMIT 1",
+      [tenDangNhap]
+    );
+    if (dr.length > 0) return res.status(409).json({ message: "Tên đăng nhập này đã được đăng ký!" });
+
+    const conn = await poolP.getConnection();
+    try {
+      await conn.beginTransaction();
+
+      await conn.query(
+        `INSERT INTO Dang_ky_tai_xe
+         (ten_dang_nhap, mat_khau, ho_ten, email, sdt, cccd, gioi_tinh, dia_chi, phuong_tien, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+        [tenDangNhap, matKhau, hoTen, email, sdt, cccd, gioiTinh, diaChi, phuongTien]
+      );
+
+      await conn.query(
+        `INSERT INTO accounts (fullname, username, password, role, created_at)
+         VALUES (?, ?, ?, 'driver', NOW())`,
+        [hoTen, tenDangNhap, matKhau]
+      );
+
+      await conn.commit();
+    } catch (e) {
+      await conn.rollback();
+      throw e;
+    } finally {
+      conn.release();
+    }
+
+    return res.status(200).json({ message: "Đăng ký tài xế thành công! Bạn có thể đăng nhập ngay." });
+  } catch (err) {
+    console.error("Lỗi register-driver:", err);
+    return res.status(500).json({ message: "Lỗi Server: " + err.message });
   }
-
-  const checkSql = "SELECT * FROM Dang_ky_tai_xe WHERE ten_dang_nhap = ?";
-  pool.query(checkSql, [tenDangNhap], (err, data) => {
-    if (err) return res.status(500).json({ message: "Lỗi hệ thống kiểm tra trùng lặp." });
-    if (data.length > 0) return res.status(409).json({ message: "Tên đăng nhập này đã được đăng ký!" });
-
-    const insertSql = `INSERT INTO Dang_ky_tai_xe (ten_dang_nhap, mat_khau, ho_ten, email, sdt, cccd, gioi_tinh, dia_chi, phuong_tien, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`;
-    const params = [tenDangNhap, matKhau, hoTen, email, sdt, cccd, gioiTinh, diaChi, phuongTien];
-
-    pool.query(insertSql, params, (err2) => {
-      if (err2) return res.status(500).json({ message: "Lỗi Server: " + err2.message });
-      return res.status(200).json({ message: "Đăng ký tài xế thành công! Hồ sơ đang chờ duyệt." });
-    });
-  });
 });
 
-// 3. Đăng nhập
+// 3) Đăng nhập
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
-  const sqlAccount = "SELECT account_id, username, fullname, role, avatar_url FROM accounts WHERE username = ? AND password = ?";
+
+  const sqlAccount = `
+    SELECT account_id, username, fullname, role, avatar_url
+    FROM accounts
+    WHERE username = ? AND password = ?
+    LIMIT 1
+  `;
 
   pool.query(sqlAccount, [username, password], (err, data) => {
     if (err) return res.status(500).json({ message: "Lỗi Server" });
-
-    if (data.length > 0) {
-      return res.json({ status: "Success", user: data[0] });
-    } else {
-      const sqlDriver = "SELECT * FROM Dang_ky_tai_xe WHERE ten_dang_nhap = ? AND mat_khau = ?";
-      pool.query(sqlDriver, [username, password], (err2, dataDriver) => {
-        if (err2) return res.status(500).json({ message: "Lỗi Server" });
-        if (dataDriver.length > 0) {
-          return res.status(403).json({ status: "Pending", message: "Tài khoản tài xế của bạn đang chờ duyệt." });
-        } else {
-          return res.status(401).json({ status: "Fail", message: "Sai tài khoản hoặc mật khẩu" });
-        }
-      });
-    }
+    if (data.length > 0) return res.json({ status: "Success", user: data[0] });
+    return res.status(401).json({ status: "Fail", message: "Sai tài khoản hoặc mật khẩu" });
   });
 });
 
+// Update avatar
 app.post('/api/update-avatar', async (req, res) => {
   try {
     const { account_id, avatar_data } = req.body;
@@ -144,7 +172,7 @@ app.post('/api/update-avatar', async (req, res) => {
   }
 });
 
-// ... Các API Like món ăn ...
+// Like món ăn
 app.post('/api/like', (req, res) => {
   const { maNguoiDung, maQuan } = req.body;
   const sqlCheck = "SELECT * FROM YeuThichMonAn WHERE MaNguoiDung = ? AND MaQuan = ?";
@@ -185,86 +213,96 @@ app.get('/api/check-like', (req, res) => {
 });
 
 // ==================================================================
-// PHẦN 2: API ĐƠN HÀNG (ĐÃ CẬP NHẬT TỌA ĐỘ)
+// PHẦN 2: API ĐƠN HÀNG
 // ==================================================================
 
-// API TẠO ĐƠN HÀNG
+// TẠO ĐƠN
 app.post('/api/orders', (req, res) => {
   const {
     ma_don_hang, tai_khoan_khach, ten_khach_hang,
     ten_mon_an, tong_tien, ten_quan,
     dia_chi_quan, dia_chi_giao,
-    vi_do_giao, kinh_do_giao, lat_tra, lng_tra, // Nhận cả 2 trường hợp
+    vi_do_giao, kinh_do_giao, lat_tra, lng_tra,
     lat_don, lng_don
   } = req.body;
 
-  // Lấy tọa độ chuẩn hóa
   const finalLatGiao = lat_tra || vi_do_giao;
   const finalLngGiao = lng_tra || kinh_do_giao;
 
-  // Insert vào DB với đầy đủ thông tin tọa độ
   const sql = `INSERT INTO don_hang 
     (ma_don_hang, tai_khoan_khach, ten_khach_hang, ten_mon_an, tong_tien, ten_quan, dia_chi_quan, dia_chi_giao, vi_do_giao, kinh_do_giao, lat_don, lng_don, trang_thai, ngay_tao) 
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'cho_xu_ly', NOW())`;
-  
+
   const params = [
-    ma_don_hang, tai_khoan_khach, ten_khach_hang, ten_mon_an, tong_tien, ten_quan, dia_chi_quan, dia_chi_giao, 
-    finalLatGiao, finalLngGiao, lat_don, lng_don
+    ma_don_hang, tai_khoan_khach, ten_khach_hang, ten_mon_an, tong_tien, ten_quan,
+    dia_chi_quan, dia_chi_giao, finalLatGiao, finalLngGiao, lat_don, lng_don
   ];
 
   pool.query(sql, params, (err) => {
     if (err) {
       console.error("Lỗi tạo đơn:", err);
-      // Fallback: Thử query cũ nếu DB chưa có cột lat_don
-      const sqlBackup = `INSERT INTO don_hang (ma_don_hang, tai_khoan_khach, ten_khach_hang, ten_mon_an, tong_tien, ten_quan, dia_chi_quan, dia_chi_giao, vi_do_giao, kinh_do_giao, trang_thai, ngay_tao) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'cho_xu_ly', NOW())`;
-      pool.query(sqlBackup, [ma_don_hang, tai_khoan_khach, ten_khach_hang, ten_mon_an, tong_tien, ten_quan, dia_chi_quan, dia_chi_giao, finalLatGiao, finalLngGiao], (err2) => {
+      const sqlBackup = `INSERT INTO don_hang 
+        (ma_don_hang, tai_khoan_khach, ten_khach_hang, ten_mon_an, tong_tien, ten_quan, dia_chi_quan, dia_chi_giao, vi_do_giao, kinh_do_giao, trang_thai, ngay_tao)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'cho_xu_ly', NOW())`;
+
+      pool.query(sqlBackup,
+        [ma_don_hang, tai_khoan_khach, ten_khach_hang, ten_mon_an, tong_tien, ten_quan, dia_chi_quan, dia_chi_giao, finalLatGiao, finalLngGiao],
+        (err2) => {
           if (err2) return res.status(500).json({ message: "Lỗi DB" });
           return res.json({ message: "Đặt hàng thành công (Fallback)", orderId: ma_don_hang });
-      });
+        }
+      );
     } else {
-        return res.json({ message: "Đặt hàng thành công", orderId: ma_don_hang });
+      return res.json({ message: "Đặt hàng thành công", orderId: ma_don_hang });
     }
   });
 });
 
-// API LẤY CHI TIẾT ĐƠN (Đã sửa JOIN với bảng Tài Xế)
-app.get('/api/orders/:maDon', (req, res) => {
-    const { maDon } = req.params;
-    
-    // [SỬA QUAN TRỌNG]: Join với bảng Dang_ky_tai_xe để lấy tên, sđt
+// ✅ CHI TIẾT ĐƠN (JOIN tài xế) - FIX 500 (bỏ t.avatar vì hay không tồn tại)
+app.get('/api/orders/:maDon', async (req, res) => {
+  const { maDon } = req.params;
+
+  try {
     const sql = `
-        SELECT 
-            d.*, 
-            t.ho_ten as driver_name, 
-            t.sdt as driver_phone, 
-            t.phuong_tien as driver_plate,
-            t.avatar as driver_avatar
-        FROM don_hang d
-        LEFT JOIN Dang_ky_tai_xe t ON d.id_tai_xe = t.id
-        WHERE d.ma_don_hang = ?
+      SELECT 
+        d.*, 
+        t.ho_ten as driver_name, 
+        t.sdt as driver_phone, 
+        t.phuong_tien as driver_plate
+      FROM don_hang d
+      LEFT JOIN Dang_ky_tai_xe t ON d.id_tai_xe = t.id
+      WHERE d.ma_don_hang = ?
+      LIMIT 1
     `;
 
-    pool.query(sql, [maDon], (err, data) => {
-        if (err) return res.status(500).json(err);
-        if (data.length > 0) {
-            const order = data[0];
-            // Format lại dữ liệu trả về cho Frontend
-            const responseData = {
-                ...order,
-                driver: order.id_tai_xe ? {
-                    name: order.driver_name,
-                    phone: order.driver_phone,
-                    plate: order.driver_plate,
-                    avatar: order.driver_avatar || 'https://cdn-icons-png.flaticon.com/512/147/147144.png'
-                } : null
-            };
-            return res.json(responseData);
-        }
-        return res.status(404).json({ message: "Không tìm thấy đơn" });
+    const [rows] = await poolP.query(sql, [maDon]);
+
+    if (!rows || rows.length === 0) {
+      return res.status(404).json({ message: "Không tìm thấy đơn" });
+    }
+
+    const order = rows[0];
+    const responseData = {
+      ...order,
+      driver: order.id_tai_xe ? {
+        name: order.driver_name,
+        phone: order.driver_phone,
+        plate: order.driver_plate,
+        avatar: "https://cdn-icons-png.flaticon.com/512/147/147144.png"
+      } : null
+    };
+
+    return res.json(responseData);
+  } catch (err) {
+    console.error("❌ Lỗi /api/orders/:maDon =", err);
+    return res.status(500).json({
+      message: "Lỗi server khi lấy chi tiết đơn",
+      error: err?.message || String(err)
     });
+  }
 });
 
-// API LẤY DANH SÁCH ĐƠN MỚI (Cho tài xế xem)
+// DANH SÁCH ĐƠN MỚI
 app.get('/api/orders', (req, res) => {
   const sql = "SELECT * FROM don_hang WHERE trang_thai = 'cho_xu_ly' ORDER BY ngay_tao DESC";
   pool.query(sql, (err, data) => {
@@ -274,70 +312,99 @@ app.get('/api/orders', (req, res) => {
 });
 
 // ==================================================================
-// PHẦN 3: SOCKET.IO - REALTIME (ĐÃ CẬP NHẬT)
+// PHẦN 3: SOCKET.IO - REALTIME
 // ==================================================================
 io.on('connection', (socket) => {
   console.log('⚡ Có người kết nối Socket:', socket.id);
 
-  // Tài xế kết nối
   socket.on('driver_connect', () => {
     socket.join('drivers_room');
     console.log('🛵 Tài xế đã vào phòng chờ đơn');
   });
 
-  // Khách hàng kết nối theo dõi đơn
   socket.on('khach_vao_theo_doi', (maDonHang) => {
     console.log(`👀 Khách đang theo dõi đơn: ${maDonHang}`);
     socket.join(`order_${maDonHang}`);
   });
 
-  // 1. Có đơn mới -> Báo cho tài xế
+  // ✅ Alias mới (KHÔNG PHÁ event cũ)
+  socket.on("order:join", ({ orderId }) => {
+    socket.join(`order_${orderId}`);
+  });
+
   socket.on('place_order', (orderData) => {
     console.log('📦 Có đơn hàng mới:', orderData.ma_don_hang);
     io.to('drivers_room').emit('new_order_available', orderData);
   });
 
-  // 2. Tài xế NHẬN ĐƠN -> Báo cho khách
   socket.on('driver_accept_order', async (data) => {
     console.log(`✅ Tài xế nhận đơn ${data.ma_don_hang}`);
-    
-    // Cập nhật DB: tai_xe_nhan (accepted)
     try {
       const updateSql = "UPDATE don_hang SET trang_thai = 'tai_xe_nhan', id_tai_xe = ? WHERE ma_don_hang = ?";
       await poolP.query(updateSql, [data.id_tai_xe || 1, data.ma_don_hang]);
-    } catch (err) { console.error("DB Update Error:", err); }
+    } catch (err) {
+      console.error("DB Update Error:", err);
+    }
 
-    // Gửi Socket cho Khách
-    io.to(`order_${data.ma_don_hang}`).emit('order_accepted', {
+    const payload = {
       driver: data.thong_tin_tai_xe,
       current_location: data.vi_tri_tai_xe
-    });
+    };
+
+    // event cũ
+    io.to(`order_${data.ma_don_hang}`).emit('order_accepted', payload);
+    // event mới
+    io.to(`order_${data.ma_don_hang}`).emit('order:updated', { orderId: data.ma_don_hang, status: 'tai_xe_nhan', ...payload });
   });
 
-  // 3. [MỚI] Tài xế CẬP NHẬT TRẠNG THÁI (Đã lấy hàng / Giao xong)
   socket.on('driver_update_status', async (data) => {
-      const { maDon, status } = data; // status: 'shipping' | 'completed'
-      console.log(`🔄 Đơn ${maDon} đổi trạng thái -> ${status}`);
+    const { maDon, status } = data;
+    console.log(`🔄 Đơn ${maDon} đổi trạng thái -> ${status}`);
 
-      // Update DB
-      try {
-          // Map status socket sang status DB
-          let dbStatus = status; 
-          if(status === 'shipping') dbStatus = 'dang_giao';
-          if(status === 'completed') dbStatus = 'hoan_thanh';
+    try {
+      let dbStatus = status;
+      if (status === 'shipping') dbStatus = 'dang_giao';
+      if (status === 'completed') dbStatus = 'hoan_thanh';
 
-          const sql = "UPDATE don_hang SET trang_thai = ? WHERE ma_don_hang = ?";
-          await poolP.query(sql, [dbStatus, maDon]);
-      } catch (e) { console.error(e); }
+      const sql = "UPDATE don_hang SET trang_thai = ? WHERE ma_don_hang = ?";
+      await poolP.query(sql, [dbStatus, maDon]);
+    } catch (e) {
+      console.error(e);
+    }
 
-      // Báo cho khách hàng
-      io.to(`order_${maDon}`).emit('order_status_change', { status: status });
+    // event cũ
+    io.to(`order_${maDon}`).emit('order_status_change', { status });
+    // event mới
+    io.to(`order_${maDon}`).emit('order:updated', { orderId: maDon, status });
   });
 
-  // 4. Tài xế DI CHUYỂN
   socket.on('update_location', (data) => {
-    // data: { ma_don_hang, lat, lng }
+    // event cũ
     io.to(`order_${data.ma_don_hang}`).emit('driver_moved', { lat: data.lat, lng: data.lng });
+    // event mới
+    io.to(`order_${data.ma_don_hang}`).emit('driver:location', { lat: data.lat, lng: data.lng, orderId: data.ma_don_hang });
+  });
+
+  // ✅ Alias mới: tài xế gửi driver:location trực tiếp
+  socket.on("driver:location", ({ orderId, lat, lng }) => {
+    io.to(`order_${orderId}`).emit('driver:location', { lat, lng, orderId });
+    io.to(`order_${orderId}`).emit('driver_moved', { lat, lng }); // giữ cũ
+  });
+
+  // ✅ Alias mới: đổi trạng thái order:status
+  socket.on("order:status", async ({ orderId, status }) => {
+    let dbStatus = status;
+    if (status === "shipping") dbStatus = "dang_giao";
+    if (status === "completed") dbStatus = "hoan_thanh";
+
+    try {
+      await poolP.query("UPDATE don_hang SET trang_thai = ? WHERE ma_don_hang = ?", [dbStatus, orderId]);
+    } catch (e) {
+      console.error("❌ order:status update error:", e);
+    }
+
+    io.to(`order_${orderId}`).emit('order:updated', { orderId, status });
+    io.to(`order_${orderId}`).emit('order_status_change', { status }); // giữ cũ
   });
 
   socket.on('disconnect', () => {
