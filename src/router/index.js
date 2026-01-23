@@ -26,7 +26,7 @@ import TheoDoiDonHang from '../pages/TheoDoiDonHang.vue'
 // còn nếu không cần thì có thể xoá route /toco ở dưới.
 import toco from '@/pages/SanPham/MuaSP/toco.vue'
 import GioHang_G from '@/pages/SanPham/Products/GioHang_G.vue'
-import Comrangnhatanh from '@/HomeShop/Comrangnhatanh.vue'
+import phogaanhthu from '@/HomeShop/phogaanhthu.vue'
 
 
 const routes = [
@@ -76,10 +76,12 @@ const routes = [
 
   { path: '/restaurant/6', name: 'buncham', component: () => import('../pages/SanPham/MuaSP/buncham.vue'), meta: { title: 'Bún Chả' } },
   { path: '/restaurant/7', name: 'mixue', component: () => import('../pages/SanPham/MuaSP/mixue.vue'), meta: { title: 'Mixue' } },
-  { path: '/comrangnhatanh', name: 'comrang', component: () => import('../HomeShop/Comrangnhatanh.vue'), meta: { title: 'Cơm Rang Nhật Anh' } },
+  { path: '/comrangnhatanh', name: 'comrang', component: () => import('../HomeShop/phogaanhthu.vue'), meta: { title: 'Cơm Rang Nhật Anh' } },
   
   // 404
-  { path: '/:pathMatch(.*)*', name: 'NotFound', component: HomeView, meta: { title: 'Không tìm thấy trang' } }
+  { path: '/:pathMatch(.*)*', name: 'NotFound', component: HomeView, meta: { title: 'Không tìm thấy trang' } },
+
+  { path: '/phogaanhthu', name: 'phogaanhthu', component: phogaanhthu, meta: { title: 'phogaanhthu' } }
 ]
 
 const router = createRouter({

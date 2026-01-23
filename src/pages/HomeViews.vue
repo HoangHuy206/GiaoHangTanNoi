@@ -133,7 +133,7 @@ watch(isMenuOpen, (open) => {
 
             <div class="service-item">
               <div class="icon-box"><img src="@/assets/anh.logo/tuido.png" alt="Mart"></div>
-              <router-link to="/l404" style="text-decoration: none;">
+              <router-link to="/phogaanhthu" style="text-decoration: none;">
               <div class="text-box">
                 <h3>Đi chợ</h3>
                 <p>Tìm kiếm mọi thứ bạn cần, hàng tạp hóa và hơn thế nữa.</p>
