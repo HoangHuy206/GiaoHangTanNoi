@@ -165,7 +165,7 @@ export default {
     
     // [QUAN TRỌNG] Thay đổi IP này thành IP LAN của máy tính bạn (VD: 192.168.1.5)
     // Nếu để localhost thì điện thoại sẽ không kết nối được
-    const SERVER_IP = 'http://localhost:3000'; 
+    const SERVER_IP = 'https://giaohangtannoi.onrender.com'; 
     const socket = io(SERVER_IP); 
 
     // [QUAN TRỌNG] Thông tin Quán (Điểm lấy hàng) - CỐ ĐỊNH

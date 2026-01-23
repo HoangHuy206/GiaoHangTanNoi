@@ -12,8 +12,10 @@ import dangkytaixe from '../pages/dangkytaixe.vue'
 import thongtinnguoidung from '@/pages/ThongTin/thongtinnguoidung.vue'
 import thongtintaixe from '@/pages/ThongTin/thongtintaixe.vue'
 import trangchulaixe from '@/pages/trangchulaixe.vue'
-import giohang from '@/pages/SanPham/Products/giohang.vue'
+
+
 import thanhtoan from '@/pages/SanPham/Products/thanhtoan.vue'
+import quenmatkhau from '@/pages/quenmatkhau.vue'
 
 import l404 from '@/assets/A404/l404.vue'
 
@@ -23,6 +25,8 @@ import TheoDoiDonHang from '../pages/TheoDoiDonHang.vue'
 // Nếu bạn vẫn muốn route /toco riêng thì giữ import này,
 // còn nếu không cần thì có thể xoá route /toco ở dưới.
 import toco from '@/pages/SanPham/MuaSP/toco.vue'
+import GioHang_G from '@/pages/SanPham/Products/GioHang_G.vue'
+
 
 const routes = [
     
@@ -30,6 +34,8 @@ const routes = [
   
   { path: '/', name: 'home', component: HomeView, meta: { title: 'Trang chủ - Giao Hàng' } },
   { path: '/home', redirect: '/' },
+
+    { path: '/quenmatkhau', name: 'quenmatkhau', component: quenmatkhau, meta: { title: 'Quên mật khẩu' } },
 
   { path: '/login', name: 'login', component: Login, meta: { title: 'Đăng nhập' } },
 
@@ -42,7 +48,7 @@ const routes = [
   { path: '/trangchulaixe', name: 'trangchulaixe', component: trangchulaixe, meta: { title: 'Trang chủ Tài xế' } },
 
   { path: '/mainSP', name: 'mainSP', component: mainSp, meta: { title: 'Sản phẩm' } },
-  { path: '/giohang', name: 'giohang', component: giohang, meta: { title: 'Giỏ Hàng' } },
+  { path: '/giohang', name: 'giohang', component: GioHang_G, meta: { title: 'Giỏ Hàng' } },
   { path: '/thanhtoan', name: 'thanhtoan', component: thanhtoan, meta: { title: 'Thanh toán' } },
 
   { path: '/Food', name: 'Food', component: Food, meta: { title: 'Food' } },

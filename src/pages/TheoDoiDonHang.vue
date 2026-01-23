@@ -8,7 +8,7 @@ import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
 import { io } from 'socket.io-client';
 
 // ====== CẤU HÌNH ======
-const SOCKET_URL = 'http://localhost:3000'; // Đổi IP này nếu cần
+const SOCKET_URL = 'https://giaohangtannoi.onrender.com'; // Đổi IP này nếu cần
 const socket = io(SOCKET_URL); 
 
 const route = useRoute();

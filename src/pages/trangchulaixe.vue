@@ -6,7 +6,7 @@ import { io } from 'socket.io-client'
 
 // ====== CẤU HÌNH ======
 // Đổi thành IP LAN máy tính của bạn để test trên điện thoại (VD: 192.168.1.x)
-const SOCKET_URL = 'http://localhost:3000'; 
+const SOCKET_URL = 'https://giaohangtannoi.onrender.com'; 
 const socket = io(SOCKET_URL)
 
 // State

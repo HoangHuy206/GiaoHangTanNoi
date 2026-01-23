@@ -8,7 +8,7 @@ import AI from '../AI/AI.vue'
 
 // --- 2. IMPORT EVENT BUS TỪ GIỎ HÀNG (Mới thêm) ---
 // Đảm bảo đường dẫn này đúng với cấu trúc thư mục của bạn
-import { cartBus } from '@/pages/Sanpham/Products/GioHang.vue' 
+import { cartBus } from '@/pages/SanPham/Products/GioHang_G.vue' 
 
 const isMenuOpen = ref(false)
 const activeTab = ref('nguoi-dung')
@@ -103,7 +103,7 @@ onMounted(async () => {
   const currentUser = getCurrentUser();
   if (currentUser && currentUser.account_id) {
       try {
-          const res = await axios.get(`http://localhost:3000/api/like/${currentUser.account_id}`);
+          const res = await axios.get(`https://giaohangtannoi.onrender.com/api/like/${currentUser.account_id}`);
           const likedList = res.data; 
 
           restaurants.value.forEach(r => {
@@ -139,7 +139,7 @@ const toggleFavorite = async (res) => {
   res.isFavorite = !res.isFavorite;
 
   try {
-      const response = await axios.post('http://localhost:3000/api/like', {
+      const response = await axios.post('https://giaohangtannoi.onrender.com/api/like', {
           maNguoiDung: currentUser.account_id,
           maQuan: res.id
       });
