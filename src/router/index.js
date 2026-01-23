@@ -12,7 +12,7 @@ import dangkytaixe from '../pages/dangkytaixe.vue'
 import thongtinnguoidung from '@/pages/ThongTin/thongtinnguoidung.vue'
 import thongtintaixe from '@/pages/ThongTin/thongtintaixe.vue'
 import trangchulaixe from '@/pages/trangchulaixe.vue'
-import giohang from '@/pages/SanPham/Products/giohang.vue'
+import GioHang from '@/pages/Sanpham/Products/GioHang.vue'
 import thanhtoan from '@/pages/SanPham/Products/thanhtoan.vue'
 import quenmatkhau from '@/pages/quenmatkhau.vue'
 
@@ -45,7 +45,7 @@ const routes = [
   { path: '/trangchulaixe', name: 'trangchulaixe', component: trangchulaixe, meta: { title: 'Trang chủ Tài xế' } },
 
   { path: '/mainSP', name: 'mainSP', component: mainSp, meta: { title: 'Sản phẩm' } },
-  { path: '/giohang', name: 'giohang', component: giohang, meta: { title: 'Giỏ Hàng' } },
+  { path: '/giohang', name: 'giohang', component: GioHang, meta: { title: 'Giỏ Hàng' } },
   { path: '/thanhtoan', name: 'thanhtoan', component: thanhtoan, meta: { title: 'Thanh toán' } },
 
   { path: '/Food', name: 'Food', component: Food, meta: { title: 'Food' } },
