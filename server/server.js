@@ -48,7 +48,8 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // ✅ Preflight (Node/express mới: dùng (.*) để tránh lỗi path-to-regexp)
-app.options('(.*)', cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
+
 
 // ✅ Thêm header chống cache sai CORS
 app.use((req, res, next) => {
