@@ -224,7 +224,7 @@ onUnmounted(() => { if (map) { map.remove(); map = null; } socket.disconnect(); 
                     <div class="rating">⭐ 5.0 • Honda Wave</div>
                 </div>
                 <div class="driver-right">
-                    <a :href="`tel:${taiXeInfo.sdt}`" class="btn-call">📞 Gọi</a>
+                    <a :href="`tel: 0377120866`" class="btn-call">📞 Gọi</a>
                 </div>
             </div>
 

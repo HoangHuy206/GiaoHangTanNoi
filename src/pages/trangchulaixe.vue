@@ -222,7 +222,7 @@ onUnmounted(() => { stopWatchLocation(); socket.disconnect(); })
         <li class="active"><i class="ti-home"></i> Trang chủ</li>
         <li><i class="ti-wallet"></i> Thu nhập</li>
         <li><i class="ti-email"></i> Hộp thư</li>
-        <li><i class="ti-user"></i><a href="/thongtinlaixe"> Hồ sơ</a></li>
+        <li><i class="ti-user"></i><a href="/thongtinlaixe" style="text-decoration: none; color: #333;"> Hồ sơ</a></li>
       </ul>
     </aside>
 
