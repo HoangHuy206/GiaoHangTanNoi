@@ -12,6 +12,7 @@ import dangkytaixe from '../pages/dangkytaixe.vue'
 import thongtinnguoidung from '@/pages/ThongTin/thongtinnguoidung.vue'
 import thongtintaixe from '@/pages/ThongTin/thongtintaixe.vue'
 import trangchulaixe from '@/pages/trangchulaixe.vue'
+import lotteriaVincomSmartCty from '@/HomeShop/lotteriaVincomSmartCty.vue'
 
 
 import thanhtoan from '@/pages/SanPham/Products/thanhtoan.vue'
@@ -79,7 +80,9 @@ const routes = [
   { path: '/comrangnhatanh', name: 'comrang', component: () => import('../HomeShop/Comrangnhatanh.vue'), meta: { title: 'Cơm Rang Nhật Anh' } },
   
   // 404
-  { path: '/:pathMatch(.*)*', name: 'NotFound', component: HomeView, meta: { title: 'Không tìm thấy trang' } }
+  // { path: '/:pathMatch(.*)*', name: 'NotFound', component: HomeView, meta: { title: 'Không tìm thấy trang' } },
+
+  { path: '/:lotteriaVincomSmartCty(.*)*', name: 'lotteriaVincomSmartCty', component: lotteriaVincomSmartCty, meta: { title: 'Lotteria VincomSmart Cty' } }
 ]
 
 const router = createRouter({
