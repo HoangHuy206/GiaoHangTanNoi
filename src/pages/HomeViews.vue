@@ -98,7 +98,7 @@ watch(isMenuOpen, (open) => {
     </div>
 
     <div class="background-img">
-      <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070&auto=format&fit=crop" alt="Background">
+      <img src="../assets/anh.logo/z7435869738899_000_e53e72bd89e38a070e1aa4f3a917f074.jpg" alt="Background">
     </div>
 
     <div class="content-intro">
@@ -161,7 +161,7 @@ watch(isMenuOpen, (open) => {
           <div class="right-column">
             <div class="service-item">
               <div class="icon-box"><img src="@/assets/anh.logo/anhnen.png" alt="Driver"></div>
-              <router-link  to="/theo-doi/:maDon">
+              <router-link  to="/l404" style="text-decoration: none;">
               <div class="text-box">
                 <h3>Đăng ký lái xe</h3>
                 <p>Trở thành đối tác để gia tăng thu nhập ngay hôm nay.</p>
@@ -381,7 +381,7 @@ header {
 
 .background-img img {
   width: 100%;
-  height: 400px;
+  height: 600px;
   object-fit: cover;
   display: block;
 }
