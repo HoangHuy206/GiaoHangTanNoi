@@ -19,28 +19,33 @@ const httpServer = createServer(app);
 
 const PORT = process.env.PORT || 3000;
 
-// ✅ FRONTEND ORIGINS (thêm domain render frontend ở đây)
-const FRONTEND_ORIGINS = (process.env.FRONTEND_ORIGINS || 'http://localhost:5173,https://giaohangtannoi-1.onrender.com')
+const FRONTEND_ORIGINS = (process.env.FRONTEND_ORIGINS || 'http://localhost:5173')
   .split(',')
   .map(s => s.trim())
   .filter(Boolean);
 
-// ✅ CORS (FIX chuẩn cho Render + preflight)
 const corsOptions = {
   origin: (origin, cb) => {
-    // Cho phép Postman/Server-to-server (origin = undefined)
+    // Cho phép request không có origin (Postman, curl)
     if (!origin) return cb(null, true);
 
     if (FRONTEND_ORIGINS.includes(origin)) return cb(null, true);
 
-    return cb(new Error(`Not allowed by CORS: ${origin}`));
+    console.log("❌ CORS blocked origin:", origin);
+    return cb(new Error("Not allowed by CORS"));
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  credentials: true,
 };
 
 app.use(cors(corsOptions));
+
+// ✅ Preflight (Node/express mới: dùng (.*) để tránh lỗi path-to-regexp)
+app.options('(.*)', cors(corsOptions));
+
+app.get('/health', (req, res) => res.json({ ok: true }));
+
 
 
 // ✅ PARSE BODY
