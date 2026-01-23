@@ -18,18 +18,31 @@ const app = express();
 const httpServer = createServer(app);
 
 const PORT = process.env.PORT || 3000;
-const FRONTEND_ORIGINS = (process.env.FRONTEND_ORIGINS || 'http://localhost:5173')
+
+// ✅ FRONTEND ORIGINS (thêm domain render frontend ở đây)
+const FRONTEND_ORIGINS = (process.env.FRONTEND_ORIGINS || 'http://localhost:5173,https://giaohangtannoi-1.onrender.com')
   .split(',')
   .map(s => s.trim())
   .filter(Boolean);
 
-// ✅ CORS
-app.use(cors({
-  origin: FRONTEND_ORIGINS,
+// ✅ CORS (FIX chuẩn cho Render + preflight)
+const corsOptions = {
+  origin: (origin, cb) => {
+    // Cho phép Postman/Server-to-server (origin = undefined)
+    if (!origin) return cb(null, true);
+
+    if (FRONTEND_ORIGINS.includes(origin)) return cb(null, true);
+
+    return cb(new Error(`Not allowed by CORS: ${origin}`));
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
-}));
+};
+
+app.use(cors(corsOptions));
+// ✅ BẮT PREFLIGHT (QUAN TRỌNG)
+app.options('*', cors(corsOptions));
 
 // ✅ PARSE BODY
 app.use(express.json({ limit: '10mb' }));
@@ -39,7 +52,8 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 const io = new Server(httpServer, {
   cors: {
     origin: FRONTEND_ORIGINS,
-    methods: ["GET", "POST"]
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
