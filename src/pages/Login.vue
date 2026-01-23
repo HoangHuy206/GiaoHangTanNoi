@@ -1,7 +1,6 @@
 <template>
   <div class="login-page">
     <div class="container">
-      
       <div class="left-side">
         <img :src="shipperImg" alt="Shipper Illustration" class="shipper-img" />
       </div>
@@ -12,26 +11,27 @@
 
           <form @submit.prevent="handleLogin">
             <div class="input-group">
-              <input 
-                type="text" 
-                v-model="username" 
-                placeholder="Tên đăng nhập..." 
+              <input
+                type="text"
+                v-model="username"
+                placeholder="Tên đăng nhập..."
                 required
               />
             </div>
 
             <div class="input-group">
-              <input 
-                type="password" 
-                v-model="password" 
-                placeholder="Mật khẩu..." 
+              <input
+                type="password"
+                v-model="password"
+                placeholder="Mật khẩu..."
                 required
               />
             </div>
 
-          
-            <button type="submit" class="btn btn-login">Đăng Nhập</button>
-          
+            <button type="submit" class="btn btn-login" :disabled="isLoading">
+              {{ isLoading ? 'Đang đăng nhập...' : 'Đăng Nhập' }}
+            </button>
+
             <div class="divider">
               <span>Hoặc</span>
             </div>
@@ -40,80 +40,103 @@
               <button type="button" class="btn btn-register">Đăng ký</button>
             </router-link>
 
-            <router-link to="/quenmatkhau" style="margin-left: 60%; color: blue; text-decoration: none;">
+            <router-link
+              to="/quenmatkhau"
+              style="margin-left: 60%; color: blue; text-decoration: none;"
+            >
               Quên mật khẩu
             </router-link>
-
-
-
           </form>
+
+          <!-- Hiển thị gợi ý cấu hình nếu thiếu env -->
+          <p v-if="showEnvHint" style="margin-top: 14px; color: #c0392b; font-size: 13px;">
+            Thiếu cấu hình API: hãy kiểm tra <b>VITE_API_BASE_URL</b> trong file <b>.env</b>
+            hoặc trong Render &gt; Environment.
+          </p>
         </div>
       </div>
-
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
-import imgSource from '../assets/anh.logo/anhbiadangnhap1.png'; 
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import imgSource from '../assets/anh.logo/anhbiadangnhap1.png'
 
-const router = useRouter();
-const username = ref('');
-const password = ref('');
-const shipperImg = ref(imgSource);
+const router = useRouter()
+
+const username = ref('')
+const password = ref('')
+const shipperImg = ref(imgSource)
+const isLoading = ref(false)
+const showEnvHint = ref(false)
+
+// ✅ Lấy BASE_URL từ .env của Vite (và bỏ dấu / cuối nếu có)
+const BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 
 const handleLogin = async () => {
+  showEnvHint.value = false
+
   if (!username.value || !password.value) {
-    alert("Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!");
-    return;
+    alert('Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!')
+    return
   }
 
+  if (!BASE_URL) {
+    showEnvHint.value = true
+    alert('Thiếu cấu hình VITE_API_BASE_URL. Hãy kiểm tra file .env hoặc Render Environment!')
+    return
+  }
+
+  isLoading.value = true
   try {
-    const response = await fetch('https://giaohangtannoi.onrender.com/login', {
+    const response = await fetch(`${BASE_URL}/login`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         username: username.value,
         password: password.value
       })
-    });
+    })
 
-    const data = await response.json();
-
-    if (response.ok) {
-      /**
-       * QUAN TRỌNG: Đổi key lưu trữ thành 'userLogin' để khớp với logic 
-       * ở trang Thông tin người dùng. 
-       * data.user phải chứa: account_id, username, fullname, role, avatar_url
-       */
-      localStorage.setItem('userLogin', JSON.stringify(data.user));
-
-      // Phân quyền điều hướng
-      if (data.user.role === 'driver') {
-        alert(`Xin chào Tài xế ${data.user.fullname || data.user.username}!`);
-        router.push('/trangchulaixe'); 
-      } else {
-        alert(`Chào mừng ${data.user.fullname || data.user.username} quay trở lại!`);
-        router.push('/Food2');
-      }
-      
-    } else {
-      alert(data.message || "Sai tài khoản hoặc mật khẩu!");
+    // ✅ Tránh crash nếu server trả về không phải JSON
+    let data = null
+    try {
+      data = await response.json()
+    } catch {
+      data = { message: 'Server trả về dữ liệu không hợp lệ (không phải JSON).' }
     }
 
+    if (response.ok) {
+      // data.user nên có: account_id, username, fullname, role, avatar_url
+      if (data?.user) {
+        localStorage.setItem('userLogin', JSON.stringify(data.user))
+      }
+
+      const role = data?.user?.role
+      const displayName = data?.user?.fullname || data?.user?.username || username.value
+
+      if (role === 'driver') {
+        alert(`Xin chào Tài xế ${displayName}!`)
+        router.push('/trangchulaixe')
+      } else {
+        alert(`Chào mừng ${displayName} quay trở lại!`)
+        router.push('/Food2')
+      }
+    } else {
+      alert(data?.message || 'Sai tài khoản hoặc mật khẩu!')
+    }
   } catch (error) {
-    console.error("Lỗi đăng nhập:", error);
-    alert("Không thể kết nối tới Server. Hãy kiểm tra XAMPP hoặc chạy 'node server.js'!");
+    console.error('Lỗi đăng nhập:', error)
+    alert('Không thể kết nối tới Server. Kiểm tra backend Render + CORS + đúng URL API!')
+  } finally {
+    isLoading.value = false
   }
-};
+}
 </script>
 
 <style scoped>
-/* Giữ nguyên phần CSS chuyên nghiệp của bạn */
 @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Roboto:wght@400;500&display=swap');
 
 .login-page {
@@ -188,7 +211,7 @@ const handleLogin = async () => {
   font-size: 16px;
   outline: none;
   transition: all 0.3s;
-  box-sizing: border-box; 
+  box-sizing: border-box;
 }
 
 .input-group input:focus {
@@ -209,6 +232,11 @@ const handleLogin = async () => {
 
 .btn:active {
   transform: scale(0.98);
+}
+
+.btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .btn-login {
@@ -261,10 +289,10 @@ const handleLogin = async () => {
   .container {
     flex-direction: column;
   }
-  
+
   .left-side {
     margin-bottom: 30px;
-    max-width: 250px; 
+    max-width: 250px;
   }
 
   .login-card {
