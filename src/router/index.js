@@ -12,7 +12,8 @@ import dangkytaixe from '../pages/dangkytaixe.vue'
 import thongtinnguoidung from '@/pages/ThongTin/thongtinnguoidung.vue'
 import thongtintaixe from '@/pages/ThongTin/thongtintaixe.vue'
 import trangchulaixe from '@/pages/trangchulaixe.vue'
-import GioHang from '@/pages/Sanpham/Products/GioHang.vue'
+import GioHang from '@/pages/SanPham/Products/GioHang.vue'
+
 import thanhtoan from '@/pages/SanPham/Products/thanhtoan.vue'
 import quenmatkhau from '@/pages/quenmatkhau.vue'
 
