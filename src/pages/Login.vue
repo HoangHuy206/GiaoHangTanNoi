@@ -9,12 +9,13 @@
         <div class="login-card">
           <h2 class="login-header">ĐĂNG NHẬP</h2>
 
-          <form @submit.prevent="handleLogin">
+          <form @submit.prevent="handleLogin" novalidate>
             <div class="input-group">
               <input
                 type="text"
-                v-model="username"
+                v-model.trim="username"
                 placeholder="Tên đăng nhập..."
+                autocomplete="username"
                 required
               />
             </div>
@@ -24,6 +25,7 @@
                 type="password"
                 v-model="password"
                 placeholder="Mật khẩu..."
+                autocomplete="current-password"
                 required
               />
             </div>
@@ -31,6 +33,8 @@
             <button type="submit" class="btn btn-login" :disabled="isLoading">
               {{ isLoading ? 'Đang đăng nhập...' : 'Đăng Nhập' }}
             </button>
+
+            <p v-if="errorMsg" class="error-msg">{{ errorMsg }}</p>
 
             <div class="divider">
               <span>Hoặc</span>
@@ -42,16 +46,19 @@
 
             <router-link
               to="/quenmatkhau"
-              style="margin-left: 60%; color: blue; text-decoration: none;"
+              class="forgot"
             >
               Quên mật khẩu
             </router-link>
           </form>
 
-          <!-- Hiển thị gợi ý cấu hình nếu thiếu env -->
-          <p v-if="showEnvHint" style="margin-top: 14px; color: #c0392b; font-size: 13px;">
+          <p v-if="showEnvHint" class="env-hint">
             Thiếu cấu hình API: hãy kiểm tra <b>VITE_API_BASE_URL</b> trong file <b>.env</b>
             hoặc trong Render &gt; Environment.
+          </p>
+
+          <p class="small-hint">
+            API đang dùng: <b>{{ BASE_URL || '(chưa cấu hình)' }}</b>
           </p>
         </div>
       </div>
@@ -69,53 +76,79 @@ const router = useRouter()
 const username = ref('')
 const password = ref('')
 const shipperImg = ref(imgSource)
+
 const isLoading = ref(false)
+const errorMsg = ref('')
 const showEnvHint = ref(false)
 
-// ✅ Lấy BASE_URL từ .env của Vite (và bỏ dấu / cuối nếu có)
+// ✅ Lấy BASE_URL từ .env của Vite (bỏ dấu / cuối nếu có)
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 
+// ✅ helper: fetch có timeout + parse JSON an toàn
+const fetchJson = async (url, options = {}, timeoutMs = 15000) => {
+  const controller = new AbortController()
+  const t = setTimeout(() => controller.abort(), timeoutMs)
+
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal })
+    let data = null
+    const text = await res.text()
+    try {
+      data = text ? JSON.parse(text) : null
+    } catch {
+      data = { message: text || 'Server trả về dữ liệu không hợp lệ (không phải JSON).' }
+    }
+    return { res, data }
+  } finally {
+    clearTimeout(t)
+  }
+}
+
 const handleLogin = async () => {
+  errorMsg.value = ''
   showEnvHint.value = false
 
   if (!username.value || !password.value) {
-    alert('Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!')
+    errorMsg.value = 'Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!'
     return
   }
-console.log("👉 BASE_URL =", BASE_URL);
 
   if (!BASE_URL) {
     showEnvHint.value = true
-    alert('Thiếu cấu hình VITE_API_BASE_URL. Hãy kiểm tra file .env hoặc Render Environment!')
+    errorMsg.value = 'Thiếu cấu hình VITE_API_BASE_URL. Kiểm tra .env hoặc Render Environment!'
     return
   }
 
   isLoading.value = true
   try {
-    const response = await fetch(`${BASE_URL}/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        username: username.value,
-        password: password.value
-      })
-    })
+    // ✅ ĐÚNG: gọi API backend (không gọi /login của frontend)
+    const url = `${BASE_URL}/api/login`
 
-    // ✅ Tránh crash nếu server trả về không phải JSON
-    let data = null
-    try {
-      data = await response.json()
-    } catch {
-      data = { message: 'Server trả về dữ liệu không hợp lệ (không phải JSON).' }
-    }
+    const { res, data } = await fetchJson(
+      url,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        // Nếu backend dùng cookie/session thì bật dòng dưới:
+        // credentials: 'include',
+        body: JSON.stringify({
+          username: username.value,
+          password: password.value
+        })
+      },
+      15000
+    )
 
-    if (response.ok) {
+    if (res.ok) {
       // data.user nên có: account_id, username, fullname, role, avatar_url
       if (data?.user) {
         localStorage.setItem('userLogin', JSON.stringify(data.user))
+      } else {
+        // nếu backend trả user khác key thì vẫn không crash
+        localStorage.setItem('userLogin', JSON.stringify(data))
       }
 
-      const role = data?.user?.role
+      const role = data?.user?.role || data?.role
       const displayName = data?.user?.fullname || data?.user?.username || username.value
 
       if (role === 'driver') {
@@ -126,11 +159,15 @@ console.log("👉 BASE_URL =", BASE_URL);
         router.push('/Food2')
       }
     } else {
-      alert(data?.message || 'Sai tài khoản hoặc mật khẩu!')
+      errorMsg.value = data?.message || 'Sai tài khoản hoặc mật khẩu!'
     }
-  } catch (error) {
-    console.error('Lỗi đăng nhập:', error)
-    alert('Không thể kết nối tới Server. Kiểm tra backend Render + CORS + đúng URL API!')
+  } catch (err) {
+    console.error('Lỗi đăng nhập:', err)
+    if (err?.name === 'AbortError') {
+      errorMsg.value = 'Request bị timeout. Kiểm tra backend Render có đang chạy không!'
+    } else {
+      errorMsg.value = 'Không thể kết nối tới Server. Kiểm tra backend Render + CORS + đúng URL API!'
+    }
   } finally {
     isLoading.value = false
   }
@@ -284,6 +321,34 @@ console.log("👉 BASE_URL =", BASE_URL);
   font-weight: 500;
   position: relative;
   z-index: 1;
+}
+
+.forgot {
+  margin-left: 60%;
+  color: blue;
+  text-decoration: none;
+  display: inline-block;
+  margin-top: 10px;
+}
+
+.error-msg {
+  margin-top: 12px;
+  color: #c0392b;
+  font-size: 14px;
+  text-align: left;
+}
+
+.env-hint {
+  margin-top: 14px;
+  color: #c0392b;
+  font-size: 13px;
+}
+
+.small-hint{
+  margin-top: 10px;
+  color: #666;
+  font-size: 12px;
+  word-break: break-all;
 }
 
 @media (max-width: 768px) {
