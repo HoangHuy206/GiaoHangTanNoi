@@ -18,63 +18,28 @@ const app = express();
 const httpServer = createServer(app);
 
 const PORT = process.env.PORT || 3000;
-
 const FRONTEND_ORIGINS = (process.env.FRONTEND_ORIGINS || 'http://localhost:5173')
   .split(',')
   .map(s => s.trim())
   .filter(Boolean);
 
-// ✅ DEBUG ORIGINS
-console.log("✅ FRONTEND_ORIGINS =", FRONTEND_ORIGINS);
-
-// ✅ CORS (FIX: không throw Error để tránh preflight fail)
-const corsOptions = {
-  origin: (origin, cb) => {
-    // Cho phép request không có origin (Postman, curl)
-    if (!origin) return cb(null, true);
-
-    if (FRONTEND_ORIGINS.includes(origin)) return cb(null, true);
-
-    console.log("❌ CORS blocked origin:", origin);
-    // IMPORTANT: trả về false thay vì throw error để browser không bị fail preflight
-    return cb(null, false);
-  },
+// ✅ CORS
+app.use(cors({
+  origin: FRONTEND_ORIGINS,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
-};
-
-// ✅ Apply CORS
-app.use(cors(corsOptions));
-
-// ✅ Preflight (Node/express mới: dùng (.*) để tránh lỗi path-to-regexp)
-app.options(/.*/, cors(corsOptions));
-
-
-// ✅ Thêm header chống cache sai CORS
-app.use((req, res, next) => {
-  res.setHeader('Vary', 'Origin');
-  next();
-});
-
-// ✅ Health check
-app.get('/health', (req, res) => res.json({ ok: true }));
+  credentials: true
+}));
 
 // ✅ PARSE BODY
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// CẤU HÌNH SOCKET.IO (đồng bộ với FRONTEND_ORIGINS)
+// CẤU HÌNH SOCKET.IO
 const io = new Server(httpServer, {
   cors: {
-    origin: (origin, cb) => {
-      if (!origin) return cb(null, true);
-      if (FRONTEND_ORIGINS.includes(origin)) return cb(null, true);
-      console.log("❌ Socket CORS blocked origin:", origin);
-      return cb(null, false);
-    },
-    methods: ["GET", "POST"],
-    credentials: true
+    origin: FRONTEND_ORIGINS,
+    methods: ["GET", "POST"]
   }
 });
 
