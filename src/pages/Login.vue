@@ -82,6 +82,7 @@ const handleLogin = async () => {
     alert('Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!')
     return
   }
+console.log("👉 BASE_URL =", BASE_URL);
 
   if (!BASE_URL) {
     showEnvHint.value = true

@@ -41,8 +41,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-// ✅ BẮT PREFLIGHT (QUAN TRỌNG)
-app.options('*', cors(corsOptions));
+
 
 // ✅ PARSE BODY
 app.use(express.json({ limit: '10mb' }));
