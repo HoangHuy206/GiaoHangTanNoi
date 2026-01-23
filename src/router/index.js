@@ -14,6 +14,7 @@ import thongtintaixe from '@/pages/ThongTin/thongtintaixe.vue'
 import trangchulaixe from '@/pages/trangchulaixe.vue'
 import giohang from '@/pages/SanPham/Products/giohang.vue'
 import thanhtoan from '@/pages/SanPham/Products/thanhtoan.vue'
+import quenmatkhau from '@/pages/quenmatkhau.vue'
 
 import l404 from '@/assets/A404/l404.vue'
 
@@ -30,6 +31,8 @@ const routes = [
   
   { path: '/', name: 'home', component: HomeView, meta: { title: 'Trang chủ - Giao Hàng' } },
   { path: '/home', redirect: '/' },
+
+    { path: '/quenmatkhau', name: 'quenmatkhau', component: quenmatkhau, meta: { title: 'Quên mật khẩu' } },
 
   { path: '/login', name: 'login', component: Login, meta: { title: 'Đăng nhập' } },
 

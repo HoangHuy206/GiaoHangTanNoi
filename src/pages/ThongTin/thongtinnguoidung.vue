@@ -151,7 +151,7 @@ const loadData = async () => {
     if (user.id) {
         isLoading.value = true;
         try {
-            const res = await axios.get(`http://localhost:3000/api/like/${user.id}`);
+            const res = await axios.get(`https://giaohangtannoi.onrender.com/api/like/${user.id}`);
             favoriteShops.value = res.data; // Dữ liệu từ SQL trả về
         } catch (error) {
             console.error("Lỗi lấy danh sách yêu thích:", error);
@@ -187,7 +187,7 @@ const onFileChange = async (e) => {
 
       // Cập nhật Avatar lên Server
       try {
-        await axios.post('http://localhost:3000/api/update-avatar', {
+        await axios.post('https://giaohangtannoi.onrender.com/api/update-avatar', {
           account_id: user.id,
           avatar_data: base64Image
         });
@@ -213,7 +213,7 @@ const removeFavorite = async (maQuan) => {
 
   try {
       // Gọi API xóa trong DB
-      await axios.post('http://localhost:3000/api/like', {
+      await axios.post('https://giaohangtannoi.onrender.com/api/like', {
           maNguoiDung: user.id,
           maQuan: maQuan
       });

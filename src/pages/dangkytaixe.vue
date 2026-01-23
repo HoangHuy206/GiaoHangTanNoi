@@ -242,7 +242,7 @@ const handleRegister = async () => {
 
     console.log('Dữ liệu đang gửi đi (Final):', driverData);
 
-    const response = await fetch('http://localhost:3000/api/register-driver', {
+    const response = await fetch('https://giaohangtannoi.onrender.com/api/register-driver', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

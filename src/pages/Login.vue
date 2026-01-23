@@ -29,15 +29,22 @@
               />
             </div>
 
+          
             <button type="submit" class="btn btn-login">Đăng Nhập</button>
           
             <div class="divider">
               <span>Hoặc</span>
             </div>
 
-            <router-link to="/phanhoidangky">
+            <router-link to="/phanhoidangky" style="margin-bottom: 20px;">
               <button type="button" class="btn btn-register">Đăng ký</button>
             </router-link>
+
+            <router-link to="/quenmatkhau" style="margin-left: 60%; color: blue; text-decoration: none;">
+              Quên mật khẩu
+            </router-link>
+
+
 
           </form>
         </div>
@@ -64,7 +71,7 @@ const handleLogin = async () => {
   }
 
   try {
-    const response = await fetch('http://localhost:3000/login', {
+    const response = await fetch('https://giaohangtannoi.onrender.com/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
