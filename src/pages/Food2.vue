@@ -8,7 +8,7 @@ import AI from '../AI/AI.vue'
 
 // --- 2. IMPORT EVENT BUS TỪ GIỎ HÀNG (Mới thêm) ---
 // Đảm bảo đường dẫn này đúng với cấu trúc thư mục của bạn
-import { cartBus } from '@/pages/Sanpham/Products/GioHang.vue' 
+import { cartBus } from '@/pages/SanPham/Products/GioHang_G.vue' 
 
 const isMenuOpen = ref(false)
 const activeTab = ref('nguoi-dung')

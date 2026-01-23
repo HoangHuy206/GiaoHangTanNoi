@@ -2,7 +2,7 @@
 import { RouterView } from 'vue-router'
 
 
-import GioHang from '@/pages/SanPham/Products/GioHang.vue'
+import GioHang from '@/pages/SanPham/Products/GioHang_G.vue'
 
 </script>
 
