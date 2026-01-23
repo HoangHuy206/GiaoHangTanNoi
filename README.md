@@ -43,3 +43,9 @@ npm install axios
 ```sh
 npm run dev
 ```
+
+## chạy server
+
+```sh
+node server.js
+```
