@@ -139,7 +139,7 @@ const currentContent = computed(() => {
 <div class="footer" style="margin-top:150px;">
     <div class="footer-container">
         <div class="footer-column branding">
-          <img src="./assets/anh.logo/anhnen.png" alt="" class="footer-logo">
+          <img src="" alt="" class="footer-logo">
           <div class="address-box">
             <h4>ĐỊA CHỈ </h4>
               <div class="map-container">

@@ -3,7 +3,7 @@ import { ref } from 'vue'
 
 // 1. Dữ liệu giả lập (Bạn thay bằng dữ liệu thật từ API sau này)
 const restaurant = ref({
-  name: "Cơm Gà",
+  name: "trang chủ phở gà anh thư",
   tags: ["Thức ăn nhanh", "Thịt gà", "Món Hàn"],
   rating: 4.6,
   reviews: "500+",
@@ -18,11 +18,21 @@ const activeCategory = ref("Dành cho bạn")
 
 // Danh sách món ăn
 const products = ref([
-  { id: 1, name: "Cơm rang dưa bò ", price: "65000", image: new URL('../../../assets/anhND/comrangduabo.webp', import.meta.url) },
-  { id: 2, name: "Cơm Rang Đùi Gà", price: "159000", image: new URL('../../../assets/anhND/comrangduiga.webp', import.meta.url) },
-  { id: 3, name: "Cơm Rang Hải Sản", price: "79000", image: new URL('../../../assets/anhND/comranghaisan.webp', import.meta.url) },
-  { id: 4, name: "Cơm Rang Thập Cẩm", price: "120000", image: new URL('../../../assets/anhND/comrangthapcam.webp', import.meta.url) },
+  { id: 1, name: "Cơm rang dưa bò ", price: "65000", image: new URL('../assets/anhND/comrangduabo.webp', import.meta.url),da_ban: 0},
+  { id: 2, name: "Cơm Rang Đùi Gà", price: "159000", image: new URL('../assets/anhND/comrangduiga.webp', import.meta.url),da_ban: 0 },
+  { id: 3, name: "Cơm Rang Hải Sản", price: "79000", image: new URL('../assets/anhND/comranghaisan.webp', import.meta.url),da_ban: 0 },
+  { id: 4, name: "Cơm Rang Thập Cẩm", price: "120000", image: new URL('../assets/anhND/comrangthapcam.webp', import.meta.url),da_ban: 0 },
 ])
+
+const themVaoGio = (mon) => {
+  // 1. Logic tăng số đơn đã đặt (Nhảy số)
+  mon.da_ban++; 
+
+  // 2. Logic thêm vào giỏ hàng của bạn (nếu có)
+  console.log(`Đã thêm ${mon.name} vào giỏ. Số đơn mới: ${mon.da_ban}`);
+  
+  // Nếu bạn có mảng giỏ hàng, hãy xử lý tiếp ở đây...
+}
 
 // --- 2. IMPORT EVENT BUS TỪ GIỎ HÀNG (Mới thêm) ---
 // Đảm bảo đường dẫn này đúng với cấu trúc thư mục của bạn
@@ -55,24 +65,29 @@ const addToCart = (product) => {
 
 <template>
   <div class="page-container">
+
+    <div class="restaurant-banner">
+      <img src="../assets/anhND/comrangduabo.webp" alt="Banner Nhà Hàng" class="banner-img">
+      <div class="banner-overlay"></div>
+      
+      <div class="banner-actions">
+        <router-link to="/mainsp" class="circle-btn">
+          <i class="ti-arrow-left">←</i>
+        </router-link>
+        <div class="right-actions">
+          <button class="circle-btn" @click="openCartPopup"><i class="ti-shopping-cart">🛒</i></button>
+        </div>
+      </div>
+    </div>
     
     <div class="main">
 
       <div class="breadcrumb">
-        <div class="imge">
-          <img src="../../../assets/anh.logo/anhnen.png" alt="" class="sup-imge" style="width: 100px; height:100px;"/>
-        </div>
-        <span>Trang chủ</span> <span class="arrow">></span> 
-        <span>Nhà hàng</span> <span class="arrow">></span> 
-        <span class="current">{{ restaurant.name }}</span>
+        
         <div class="icon-header">
           <i>
           <a href="#" @click.prevent="openCartPopup" class="cart-icon-link">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: black;">
-                <circle cx="9" cy="21" r="1"></circle>
-                <circle cx="20" cy="21" r="1"></circle>
-                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-            </svg>
+            <i class=" ti-bell" style="font-size: 24px;" ></i>
           </a>
 
           <router-link to="/thongtinnguoidung">
@@ -112,29 +127,41 @@ const addToCart = (product) => {
 
 
     <section class="menu-section">
-      <h2 class="section-title">Dành cho bạn</h2>
+  <h2 class="section-title">kiểm soát đơn hàng </h2>
+  
+  <div class="product-list-horizontal">
+    <div v-for="item in products" :key="item.id" class="product-card-horizontal">
       
-      <div class="product-grid">
-        <div v-for="item in products" :key="item.id" class="product-card">
-          <div class="card-img">
-            <img :src="item.image" :alt="item.name">
-          </div>
-          <div class="card-content">
-            <h3 class="prod-name">{{ item.name }}</h3>
-            <p class="prod-desc">Món ngon bán chạy nhất tuần qua...</p> <div class="card-footer">
-              <span class="price">{{ item.price.toLocaleString('vi-VN') }}₫</span>
-              
-              <button class="add-btn" @click="addToCart(item)">+</button>
-            </div>
-          </div>
+      <div class="card-img-left">
+        <img :src="item.image" :alt="item.name">
+      </div>
+
+      <div class="card-info-middle">
+        <h3 class="prod-name">{{ item.name }}</h3>
+        <p class="prod-desc">Món ngon bán chạy nhất tuần qua, hương vị đậm đà khó cưỡng...</p>
+        
+        <div class="order-count">
+          <i class="ti-shopping-cart"></i> 
+          <span>Đã đặt: <b>{{ item.da_ban }}</b> đơn</span>
+        </div>
+
+        <div class="price-row">
+          <span class="price">{{ Number(item.price).toLocaleString('vi-VN') }}₫</span>
         </div>
       </div>
-    </section>
+
+      <div class="card-action-right">
+        <button class="add-btn-large" @click="addToCart(item); themVaoGio(item)">+</button>
+      </div>
+
+    </div>
+  </div>
+</section>
 
     <div class="footer">
       <div class="footer-container">
         <div class="footer-column branding">
-          <img src="../../../assets/anh.logo/anhnen.png" alt="Logo" class="footer-logo">
+          <img src="../assets/anh.logo/anhnen.png" alt="Logo" class="footer-logo">
           
         </div>
         <div class="footer-column">
@@ -325,4 +352,209 @@ const addToCart = (product) => {
 .footer-column li { margin-bottom: 10px; }
 .footer-column a { text-decoration: none; color: #666; font-size: 15px; }
 .map-container { margin-top: 15px; border-radius: 8px; overflow: hidden; }
+
+/* --- GIAO DIỆN HÀNG NGANG (FULL WIDTH) --- */
+.product-list-horizontal {
+  display: flex;
+  flex-direction: column; /* Xếp chồng các hàng lên nhau */
+  gap: 16px;
+  width: 100%;
+}
+
+.product-card-horizontal {
+  display: flex; /* Cấu trúc ngang: Ảnh - Thông tin - Nút */
+  background: #fff;
+  border-bottom: 1px solid #f2f2f2;
+  padding: 16px 0;
+  width: 100%;
+  align-items: center;
+  transition: background 0.2s;
+}
+
+.product-card-horizontal:hover {
+  background: #fafafa;
+}
+
+/* 1. Kích thước ảnh */
+.card-img-left {
+  width: 130px;
+  height: 130px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-right: 20px;
+}
+
+.card-img-left img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 2. Thông tin ở giữa */
+.card-info-middle {
+  flex: 1; /* Chiếm toàn bộ khoảng trống còn lại */
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.prod-name {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 0;
+  color: #1c1c1c;
+}
+
+.prod-desc {
+  font-size: 14px;
+  color: #676767;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 1; /* Chỉ hiện 1 dòng mô tả */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Style cho dòng số đơn đã đặt */
+.order-count {
+  font-size: 13px;
+  color: #00b14f;
+  background: #f0fbf4;
+  padding: 4px 10px;
+  border-radius: 4px;
+  width: fit-content;
+  margin: 4px 0;
+}
+
+.order-count b {
+  font-weight: 800;
+}
+
+.price {
+  font-size: 17px;
+  font-weight: bold;
+  color: #1c1c1c;
+}
+
+/* 3. Nút bấm bên phải */
+.card-action-right {
+  margin-left: 20px;
+}
+
+.add-btn-large {
+  background-color: #00B14F;
+  color: white;
+  border: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px; /* Bo góc hiện đại hơn */
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.add-btn-large:hover {
+  background-color: #008f3e;
+  transform: scale(1.1);
+}
+
+/* Responsive cho điện thoại */
+@media (max-width: 600px) {
+  .card-img-left {
+    width: 100px;
+    height: 100px;
+  }
+  .prod-name { font-size: 16px; }
+}
+
+/* --- BANNER HEADER CÓ ẢNH --- */
+.restaurant-banner {
+  position: relative;
+  width: 100%;
+  height: 300px; /* Chiều cao ảnh banner */
+  overflow: hidden;
+}
+
+.banner-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.restaurant-banner:hover .banner-img {
+  transform: scale(1.05); /* Hiệu ứng zoom nhẹ khi di chuột vào */
+}
+
+/* Lớp phủ đen mờ để các nút bấm nổi bật hơn */
+.banner-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, transparent 50%, rgba(255,255,255,1) 100%);
+}
+
+/* Các nút bấm trên ảnh */
+.banner-actions {
+  position: absolute;
+  top: 20px;
+  left: 0;
+  right: 0;
+  padding: 0 20px;
+  display: flex;
+  justify-content: space-between;
+  z-index: 10;
+}
+
+.circle-btn {
+  width: 40px;
+  height: 40px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  text-decoration: none;
+  color: #333;
+  font-weight: bold;
+}
+
+.circle-btn:hover {
+  background: #f0f0f0;
+}
+
+.right-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* Điều chỉnh lại phần main để khít với banner */
+.main {
+  max-width: 1200px;
+  margin: -50px auto 0; /* Đẩy nội dung lên trên ảnh một chút tạo hiệu ứng xếp lớp */
+  position: relative;
+  z-index: 20;
+  background: white;
+  border-radius: 20px 20px 0 0; /* Bo góc phía trên nội dung */
+  padding: 30px;
+}
+
+@media (max-width: 768px) {
+  .restaurant-banner {
+    height: 200px;
+  }
+  .main {
+    margin-top: -30px;
+    padding: 20px;
+  }
+}
 </style>

@@ -86,7 +86,7 @@ import { useRouter } from 'vue-router';
 import axios from 'axios';
 
 const router = useRouter();
-const API_BASE = 'http://localhost:3000/api'; 
+const API_BASE = 'https://giaohangtannoi.onrender.com/api'; 
 const defaultAvatar = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
 const bannerImage = 'https://vmstyle.vn/wp-content/uploads/2025/10/hinh-nen-cay-co-4k-voi-tan-la-xanh-mat-va-nang-xuyen-qua.jpg';
 

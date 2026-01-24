@@ -69,7 +69,7 @@ const handleRegister = async () => {
 
   try {
     // 2. Gửi dữ liệu về Server (Bao gồm cả fullname)
-    const response = await fetch('http://localhost:3000/register', { 
+    const response = await fetch('https://giaohangtannoi.onrender.com/register', { 
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

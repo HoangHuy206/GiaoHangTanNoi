@@ -12,7 +12,9 @@ import dangkytaixe from '../pages/dangkytaixe.vue'
 import thongtinnguoidung from '@/pages/ThongTin/thongtinnguoidung.vue'
 import thongtintaixe from '@/pages/ThongTin/thongtintaixe.vue'
 import trangchulaixe from '@/pages/trangchulaixe.vue'
-import giohang from '@/pages/SanPham/Products/giohang.vue'
+import lotteriaVincomSmartCty from '@/HomeShop/lotteriaVincomSmartCty.vue'
+
+
 import thanhtoan from '@/pages/SanPham/Products/thanhtoan.vue'
 import quenmatkhau from '@/pages/quenmatkhau.vue'
 
@@ -24,6 +26,9 @@ import TheoDoiDonHang from '../pages/TheoDoiDonHang.vue'
 // Nếu bạn vẫn muốn route /toco riêng thì giữ import này,
 // còn nếu không cần thì có thể xoá route /toco ở dưới.
 import toco from '@/pages/SanPham/MuaSP/toco.vue'
+import GioHang_G from '@/pages/SanPham/Products/GioHang_G.vue'
+import phogaanhthu from '@/HomeShop/phogaanhthu.vue'
+
 
 const routes = [
     
@@ -45,7 +50,7 @@ const routes = [
   { path: '/trangchulaixe', name: 'trangchulaixe', component: trangchulaixe, meta: { title: 'Trang chủ Tài xế' } },
 
   { path: '/mainSP', name: 'mainSP', component: mainSp, meta: { title: 'Sản phẩm' } },
-  { path: '/giohang', name: 'giohang', component: giohang, meta: { title: 'Giỏ Hàng' } },
+  { path: '/giohang', name: 'giohang', component: GioHang_G, meta: { title: 'Giỏ Hàng' } },
   { path: '/thanhtoan', name: 'thanhtoan', component: thanhtoan, meta: { title: 'Thanh toán' } },
 
   { path: '/Food', name: 'Food', component: Food, meta: { title: 'Food' } },
@@ -72,9 +77,15 @@ const routes = [
 
   { path: '/restaurant/6', name: 'buncham', component: () => import('../pages/SanPham/MuaSP/buncham.vue'), meta: { title: 'Bún Chả' } },
   { path: '/restaurant/7', name: 'mixue', component: () => import('../pages/SanPham/MuaSP/mixue.vue'), meta: { title: 'Mixue' } },
-
+  { path: '/comrangnhatanh', name: 'comrang', component: () => import('../HomeShop/phogaanhthu.vue'), meta: { title: 'Cơm Rang Nhật Anh' } },
+  
   // 404
-  { path: '/:pathMatch(.*)*', name: 'NotFound', component: HomeView, meta: { title: 'Không tìm thấy trang' } }
+  { path: '/:pathMatch(.*)*', name: 'NotFound', component: HomeView, meta: { title: 'Không tìm thấy trang' } },
+
+  { path: '/phogaanhthu', name: 'phogaanhthu', component: phogaanhthu, meta: { title: 'phogaanhthu' } },
+
+  { path: '/lotteriaVincomSmartCty', name: 'lotteriaVincomSmartCty', component: lotteriaVincomSmartCty, meta: { title: 'lotteria Vincom Smart Cty' } }
+
 ]
 
 const router = createRouter({
